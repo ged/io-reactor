@@ -1,6 +1,7 @@
 README
 makedocs.rb
 examples/chatserver.rb
+install.rb
 lib/io/reactor.rb
 test.rb
 makedocs.rb
