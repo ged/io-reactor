@@ -1,4 +1,3 @@
-CATALOG
 README
 docs/makedocs.rb
 docs/lib/**/*
@@ -11,4 +10,5 @@ test.rb
 makedocs.rb
 utils.rb
 ChangeLog
+CATALOG
 
