@@ -18,7 +18,7 @@
 #
 # == Version
 #
-#  $Id: test.rb,v 1.7 2003/07/21 06:55:26 deveiant Exp $
+#  $Id: test.rb,v 1.8 2003/08/04 23:57:07 deveiant Exp $
 # 
 #
 
@@ -56,14 +56,14 @@ class IOReactorTestCase < Test::Unit::TestCase
 
 
 	# Test to make sure require worked
-	def test_00Requires
+	def test_00_Requires
 		assert_instance_of Class, IO::Reactor
 		assert_instance_of IO::Reactor, @reactor
 	end
 
 
 	# Test set and reset with an IO
-	def test_03RegisterIO
+	def test_10_RegisterIO
 		assert_nothing_raised { @reactor.register $stdout, :write }
 		assert_nothing_raised { @reactor.add $stdout, :write }
 		assert @reactor.registered?( $stdout )
@@ -72,7 +72,7 @@ class IOReactorTestCase < Test::Unit::TestCase
 
 
 	# Test set and reset with a File
-	def test_04RegisterFilehandle
+	def test_11_RegisterFilehandle
 		assert_nothing_raised { @reactor.register @tmpfile, :write }
 		assert_nothing_raised { @reactor.add @tmpfile, :write }
 		assert @reactor.registered?( @tmpfile )
@@ -81,7 +81,7 @@ class IOReactorTestCase < Test::Unit::TestCase
 
 
 	# Test set and reset with a File
-	def test_05RegisterSocket
+	def test_12_RegisterSocket
 		assert_nothing_raised { @reactor.register @sock, :read, :write }
 		assert_nothing_raised { @reactor.add @sock, :read }
 		assert @reactor.registered?( @sock )
@@ -90,7 +90,7 @@ class IOReactorTestCase < Test::Unit::TestCase
 
 
 	# Test registration with a callback as an inline block
-	def test_06RegisterWithBlock
+	def test_20_RegisterWithBlock
 		assert_nothing_raised {
 			@reactor.register($stdout, :write) {|io,eventMask|
 				$stderr.puts "Got an output event for STDOUT"
@@ -103,7 +103,7 @@ class IOReactorTestCase < Test::Unit::TestCase
 
 
 	# Test registration with a Proc argument
-	def test_07RegisterWithProc
+	def test_21_RegisterWithProc
 		handlerProc = Proc::new {|io,eventMask|
 			$stderr.puts "Got an output event for STDOUT"
 		}
@@ -116,7 +116,7 @@ class IOReactorTestCase < Test::Unit::TestCase
 
 
 	# Test registration with a Method argument
-	def test_08RegisterWithMethod
+	def test_22_RegisterWithMethod
 		assert_nothing_raised {
 			@reactor.register $stdout, :write, &$stderr.method( :puts )
 		}
@@ -125,8 +125,19 @@ class IOReactorTestCase < Test::Unit::TestCase
 	end
 
 
+	# Test registering with an argument
+	def test_23_RegisterWithArgs
+		assert_nothing_raised {
+			@reactor.register $stdout, :write, "foo", &$stderr.method( :puts )
+		}
+		assert @reactor.handles.key?( $stdout ),
+			"handles hash doesn't contain $stdout"
+		assert_equal ["foo"], @reactor.handles[$stdout][:args]
+	end
+
+
 	# Test the clear method
-	def test_09Clear
+	def test_30_Clear
 		# Make sure it's empty
 		assert_nothing_raised {
 			@reactor.clear
@@ -144,7 +155,7 @@ class IOReactorTestCase < Test::Unit::TestCase
 
 
 	# Test the #poll method
-	def test_11Poll
+	def test_40_Poll
 		rv = nil
 
 		@reactor.register $stdout, :write
@@ -159,7 +170,7 @@ class IOReactorTestCase < Test::Unit::TestCase
 
 
 	# Test #poll with a block default handler
-	def test_12PollWithBlock
+	def test_41_PollWithBlock
 		rv = nil
 
 		@reactor.register $stdout, :write
@@ -171,6 +182,24 @@ class IOReactorTestCase < Test::Unit::TestCase
 			}
 		}
 	end
+
+	# Test polling with an argument
+	def test_42_PollWithArgs
+		setval = nil
+		testAry = %w{foo bar baz}
+		
+		@reactor.register( $stdout, :write, *testAry )
+		assert_equal testAry, @reactor.handles[$stdout][:args]
+
+		assert_nothing_raised {
+			@reactor.poll( 15 ) {|io,ev,*args|
+				setval = args
+			}
+		}
+
+		assert_equal testAry, setval
+	end
+
 
 end # class PollTestCase
 
