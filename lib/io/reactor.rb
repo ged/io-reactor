@@ -44,7 +44,7 @@
 #
 # == Version
 #
-#  $Id: reactor.rb,v 1.11 2003/07/21 06:55:26 deveiant Exp $
+#  $Id: reactor.rb,v 1.12 2003/07/22 16:31:17 deveiant Exp $
 # 
 
 require 'delegate'
@@ -56,8 +56,8 @@ class IO
 class Reactor
 
 	### Class constants
-	Version = /([\d\.]+)/.match( %q{$Revision: 1.11 $} )[1]
-	Rcsid = %q$Id: reactor.rb,v 1.11 2003/07/21 06:55:26 deveiant Exp $
+	Version = /([\d\.]+)/.match( %q{$Revision: 1.12 $} )[1]
+	Rcsid = %q$Id: reactor.rb,v 1.12 2003/07/22 16:31:17 deveiant Exp $
 
 	ValidEvents = [:read, :write, :error]
 
@@ -82,7 +82,8 @@ class Reactor
 	# event/s => handler.
 	attr_reader :handles
 
-	# The Hash of events which occurred in the last event loop, keyed by handle.
+	# The Hash of unhandled events which occurred in the last event loop, keyed
+	# by handle.
 	attr_reader :pendingEvents
 
 
@@ -216,7 +217,6 @@ class Reactor
 					elsif block_given?
 						yield( io, ev )
 					else
-						$stderr.puts "Pending events hash is: #{@pendingEvents.inspect}"
 						@pendingEvents[io].push( ev )
 					end
 				}
