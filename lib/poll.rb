@@ -1,6 +1,6 @@
 #!/usr/bin/ruby
 # 
-# An object-oriented poll() implementation for Ruby
+# An object-oriented implementation of poll(2) for Ruby
 # 
 # == Synopsis
 # 
@@ -42,7 +42,7 @@
 #
 # == Version
 #
-#  $Id: poll.rb,v 1.3 2002/04/17 13:03:45 deveiant Exp $
+#  $Id: poll.rb,v 1.4 2002/04/17 21:18:30 deveiant Exp $
 # 
 
 require 'delegate'
@@ -92,8 +92,8 @@ class Poll
 
 
 	### Class constants
-	Version = /([\d\.]+)/.match( %q$Revision: 1.3 $ )[1]
-	Rcsid = %q$Id: poll.rb,v 1.3 2002/04/17 13:03:45 deveiant Exp $
+	Version = /([\d\.]+)/.match( %q$Revision: 1.4 $ )[1]
+	Rcsid = %q$Id: poll.rb,v 1.4 2002/04/17 21:18:30 deveiant Exp $
 
 	### Create and return new poll object.
 	def initialize
