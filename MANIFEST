@@ -7,6 +7,7 @@ extconf.rb
 lib/poll.rb
 poll.c
 test.rb
+makedocs.rb
 utils.rb
 ChangeLog
 
