@@ -29,7 +29,7 @@ some other platform, I'd like to hear about that, too.
 
 == Caveats
 
-*IMPORTANT*: This is an *alpha* release. It might blow up, compromise your
+*IMPORTANT*: This is an *beta* release. It might blow up, compromise your
 security, write random data to sensitive portions of your hard drive, or
 otherwise fail to work as advertised. It is intended to be used by developers
 who are interested in helping out or curious onlookers who don't mind getting
@@ -45,13 +45,34 @@ for platforms other than those mentioned above. I may be reached by email at
 <ged@FaerieMUD.org>.
 
 
+== Requirements
+
+* Ruby >= 1.6.5
+* A C library with the poll() function.
+* A C compiler
+* The 'delegate' module (included with Ruby 1.7.x)
+
+Optional:
+
+* Dave Thomas's RDoc documentation tool to make HTML documentation.
+* The Test::Unit module, to run the included test suite.
+
+
 == Installation
 
   $ ruby extconf.rb
   $ make
-  $ make test (if you have Test::Unit installed)
   $ su
-  # make install
+  # make site-install
+
+If you have the Test::Unit module installed, you can run the test suite by
+doing:
+
+  $ make test
+
+If you have RDoc, you can make HTML documentation in docs/html by doing:
+
+  $ make docs
 
 
 == More Information
@@ -75,7 +96,7 @@ INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND
 FITNESS FOR A PARTICULAR PURPOSE.
 
 
- $Id: README,v 1.2 2002/04/17 21:20:32 deveiant Exp $
+ $Id: README,v 1.3 2002/04/18 14:42:07 deveiant Exp $
 
 
 
