@@ -1,0 +1,82 @@
+
+= Ruby-Poll - an object-oriented implementation of poll(2) for Ruby
+
+
+== Authors
+
+ Michael Granger <ged@FaerieMUD.org>
+
+
+== General Information
+
+The poll(2) function is a select()-like function that waits for interesting
+events to happen to any of an array of file descriptors. Ruby-Poll is an
+object-oriented implementation of that call which encapsulates the management
+and processing of the data structures involved in a Poll object. The object
+interface can be used to add, remove, and modify the file descriptors being
+polled and the bitmasks that determine what events they are interested in
+receiving, as well as optional event handler blocks or methods for each
+descriptor.
+
+It's only been tested under Linux 2.4.x running on ix86, as that is the only
+platform I have available for testing. I'd be happy to test and/or modify it to
+work under other environments, assuming it has a libc with the poll() function
+and someone can provide a testing/development environment. Alternately, I'd be
+happy to accept patches for other platforms/OSes. If it works for you as-is on
+some other platform, I'd like to hear about that, too.
+
+
+== Caveats
+
+*IMPORTANT*: This is an *alpha* release. It might blow up, compromise your
+security, write random data to sensitive portions of your hard drive, or
+otherwise fail to work as advertised. It is intended to be used by developers
+who are interested in helping out or curious onlookers who don't mind getting
+a bit wet.
+
+As mentioned above, it might not work under operating systems other than
+Linux, as that's the only environment I have available for testing.
+
+That said, I would greatly appreciate feedback on any aspect of this
+software. Suggestions, feature requests, questions, design critiques, and bug
+reports are most welcome. Relevant patches are particularly helpful, especially
+for platforms other than those mentioned above. I may be reached by email at
+<ged@FaerieMUD.org>.
+
+
+== Installation
+
+  $ ruby extconf.rb
+  $ make
+  $ make test (if you have Test::Unit installed)
+  $ su
+  # make install
+
+
+== More Information
+
+You can find out more information about Ruby-Poll, including the latest version,
+at its project page:
+
+  http://www.devEiate.org/code/Ruby-Poll.shtml
+
+
+== Legal
+
+Ruby-Poll is Open Source Software which is Copyright (c) 2001,2002 by The
+FaerieMUD Consortium.
+
+You may use, modify, and/or redistribute this software under the same terms as
+Ruby itself.
+
+THIS PACKAGE IS PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND
+FITNESS FOR A PARTICULAR PURPOSE.
+
+
+ $Id: README,v 1.1 2002/04/17 21:14:02 deveiant Exp $
+
+
+
+
+
