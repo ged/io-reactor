@@ -2,6 +2,7 @@ README
 docs/makedocs.rb
 docs/lib/**/*
 docs/stylesheets
+examples/*
 extconf.rb
 lib/poll.rb
 poll.c
