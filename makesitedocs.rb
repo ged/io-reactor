@@ -1,7 +1,7 @@
 #!/usr/bin/ruby
 #
 #	Ruby-Project Documentation Generation Script
-#	$Id: makesitedocs.rb,v 1.1 2002/04/18 18:01:03 deveiant Exp $
+#	$Id: makesitedocs.rb,v 1.2 2002/07/19 03:55:15 deveiant Exp $
 #
 #	Copyright (c) 2001,2002 The FaerieMUD Consortium.
 #
@@ -36,11 +36,11 @@ opts = GetoptLong.new
 opts.set_options(
 	[ '--debug',	'-d',	GetoptLong::NO_ARGUMENT ],
 	[ '--verbose',	'-v',	GetoptLong::NO_ARGUMENT ],
-	[ '--upload',	'-u',	GetoptLong::REQUIRE_ARGUMENT ]
+	[ '--upload',	'-u',	GetoptLong::OPTIONAL_ARGUMENT ]
 )
 
 $docsdir = "docs/html"
-$libdirs = %w{lib examples README}
+$sources = findRdocableFiles()
 opts.each {|opt,val|
 	case opt
 
@@ -51,31 +51,38 @@ opts.each {|opt,val|
 		$verbose = true
 
 	when '--upload'
-		$upload = val
+		$upload = unless val.empty?
+					  val
+				  else
+					  'file:///www/devEiate.org/public/code/Ruby-Poll'
+				  end
+		debugMsg "Setting upload arg to #$upload"
 
 	end
 }
 
 
-header "Making documentation in #$docsdir from files in #{$libdirs.join(', ')}."
+header "Making documentation in #$docsdir from files in #{$sources.join(', ')}."
+message "Will upload to '#$upload'" if $upload
 
 flags = [
 	'--all',
 	'--inline-source',
 	'--main', 'README',
-	'--fmt', 'myhtml',
+	'--fmt', 'html',
 	'--include', 'docs',
-	'--template', 'faeriemud',
+	'--template', 'mues',
 	'--op', $docsdir,
-	'--title', "Ruby-Poll"
+	'--title', $project,
 ]
 
-message "Running 'rdoc #{flags.join(' ')} #{$libdirs.join(' ')}'\n" if $verbose
+flags += [ '--quiet' ] unless $verbose
+message "Running 'rdoc #{flags.join(' ')} #{$sources.join(' ')}'\n" if $verbose
 
 unless $debug
 	begin
 		r = RDoc::RDoc.new
-		r.document( flags + $libdirs  )
+		r.document( flags + $sources  )
 	rescue RDoc::RDocError => e
 		$stderr.puts e.message
 		exit(1)
@@ -90,38 +97,47 @@ if $upload
 	when %r{^ssh://(.*)}
 		target = $1
 		if target =~ %r{^([^/]+)/(.*)}
-			host, dir = $1, $2
+			host, path = $1, $2
+			path = "/" + path unless path =~ /^(\/|\.)/
+			cmd = "tar -C docs/html -cf - . | ssh #{host} 'tar -C #{path} -xvf -'"
 			unless $debug
-				system( "tar -C docs/html -cf - . | ssh #{host} 'tar -C #{dir}/Ruby-Poll -xvf -'" )
+				system( cmd )
 			else
-				message %{system( "tar -C docs/html -cf - . | ssh galendril 'tar -C /www/devEiate.org/public/code/Ruby-Poll -xvf -'" )}
+				message "Would have uploaded using the command:\n    #{cmd}\n\n"
 			end
+		else
+			error "--upload ssh://host/path"
+		end
+	when %r{^file://(.*)}
+		targetdir = $1
+		targetdir.gsub!( %r{^file://}, '' )
+
+		File.makedirs targetdir, true
+		Dir["docs/html/**/*"].each {|file|
+			fname = file.gsub( %r{docs/html/}, '' )
+			if File.directory? file
+				unless $debug
+					File.makedirs File.join(targetdir, fname), true
+				else
+					message %{File.makedirs %s, true\n} % File.join(targetdir, fname)
+				end
+			else
+				unless $debug
+					File.install( file, File.join(targetdir, fname), 0444, true )
+				else
+					message %{File.install( %s, %s, 0444, true )\n} % [
+						file,
+						File.join(targetdir, fname),
+					]
+				end
+			end
+		}
 
 	else
-			File.makedirs TARGETDIR
-			Dir["docs/html/**/*"].each {|file|
-				fname = file.gsub( %r{docs/html/}, '' )
-				if File.directory? file
-					unless $debug
-						File.makedirs File.join(TARGETDIR, fname), true
-					else
-						message %{File.makedirs %s, true\n} % File.join(TARGETDIR, fname)
-					end
-				else
-					unless $debug
-						File.install( file, File.join(TARGETDIR, fname), 0444, true )
-					else
-						message %{File.install( %s, %s, 0444, true )\n} % [
-							file,
-							File.join(TARGETDIR, fname),
-						]
-					end
-				end
-			}
-		else
-		end
+		raise "I don't know how to upload to urls like #$upload."
 	end
 end
+
 
 # rdoc \
 #	--all \
