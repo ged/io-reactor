@@ -18,7 +18,7 @@
 #
 # == Version
 #
-#  $Id: test.rb,v 1.5 2002/07/20 16:01:37 deveiant Exp $
+#  $Id: test.rb,v 1.6 2003/04/21 04:37:01 deveiant Exp $
 # 
 #
 
@@ -36,19 +36,21 @@ PORT	= 5656
 class PollTestCase < Test::Unit::TestCase
 
 	# Setup method
-	def set_up
+	def setup
 		@poll = Poll::new
 		@tmpfile = File::open( TMPFILE, "w" )
 		File::unlink TMPFILE
 		@sock = TCPServer::new( HOST, PORT )
 	end
+	alias_method :set_up, :setup
 
 	# Teardown method
-	def tear_down
+	def teardown
 		@poll = nil
 		@tmpfile.close
 		@sock.close
 	end
+	alias_method :tear_down, :teardown
 
 
 	# Test to make sure require worked
