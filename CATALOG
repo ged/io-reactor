@@ -1,3 +1,9 @@
+#
+# Title:  IO-Reactor
+# Main:   README
+# Upload: ssh://oberon/www/devEiate.org/public/code/IO-Reactor/
+# Webcvs: http://www.deveiate.org/cgi/viewcvs.cgi/IO-Reactor/
+#
 lib/io/*
 README
 ChangeLog
