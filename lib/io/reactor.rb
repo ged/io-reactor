@@ -4,31 +4,40 @@
 # 
 # == Synopsis
 # 
-#	require 'io/reactor'
-#	require 'socket'
-#	
-#	reactorobj = IO::Reactor::new
-#	
-#	sock = TCPServer::new('localhost', 1138)
-#	reactorobj.register( sock, :read ) {|sock,event|
-#		case event
-#		when :read
-#			clsock = sock.accept
-#			reactorobj.register( clsock, :read, :write ) {|sock,event|
-#				clientHandler( sock, event )
-#			}
-#	
-#		when :error
-#			reactorobj.remove( io )
-#			$stderr.puts "Server error: Shutting down"
-#	
-#		else
-#			$stderr.puts "Unhandled event: #{event}"
-#		end
-#	}
-#	
-#	Thread::new { reactorobj.poll( 0 ) until reactorobj.handles.empty? }
+#   require 'io/reactor'
+#   require 'socket'
+#  
+#   reactorobj = IO::Reactor::new
 # 
+#   # Open a listening socket on port 1138 and register it with the
+#   # reactor. When a :read event occurs on it, it means an incoming
+#   # connection has been established
+#   sock = TCPServer::new('localhost', 1138)
+#   reactorobj.register( sock, :read ) {|sock,event|
+#       case event
+#
+#       # Accept the incoming connection, registering it also with
+#       # the reactor; events on client sockets are handled by the
+#       # #clientHandler method.
+#       when :read
+#           clsock = sock.accept
+#           reactorobj.register( clsock, :read, :write,
+#               &method(:clientHandler) )
+#
+#       # Errors on the main listening socket cause the whole
+#       # reactor to be shut down
+#       when :error
+#           reactorobj.clear
+#           $stderr.puts "Server error: Shutting down"
+#
+#       else
+#           $stderr.puts "Unhandled event: #{event}"
+#       end
+#   }
+#
+#   # Drive the reactor until it's empty with a single thread
+#   Thread::new { reactorobj.poll until reactorobj.empty? }
+#
 # == Author
 # 
 # Michael Granger <ged@FaerieMUD.org>
@@ -44,7 +53,7 @@
 #
 # == Version
 #
-#  $Id: reactor.rb,v 1.12 2003/07/22 16:31:17 deveiant Exp $
+#  $Id: reactor.rb,v 1.13 2003/08/04 23:56:14 deveiant Exp $
 # 
 
 require 'delegate'
@@ -56,8 +65,8 @@ class IO
 class Reactor
 
 	### Class constants
-	Version = /([\d\.]+)/.match( %q{$Revision: 1.12 $} )[1]
-	Rcsid = %q$Id: reactor.rb,v 1.12 2003/07/22 16:31:17 deveiant Exp $
+	Version = /([\d\.]+)/.match( %q{$Revision: 1.13 $} )[1]
+	Rcsid = %q$Id: reactor.rb,v 1.13 2003/08/04 23:56:14 deveiant Exp $
 
 	ValidEvents = [:read, :write, :error]
 
@@ -67,6 +76,7 @@ class Reactor
 			hsh[ key ] = {
 				:events		=> [],
 				:handler	=> nil,
+				:args		=> [],
 			}
 		}
 		@pendingEvents	= Hash::new {|hsh,key| hsh[ key ] = []}
@@ -82,27 +92,38 @@ class Reactor
 	# event/s => handler.
 	attr_reader :handles
 
-	# The Hash of unhandled events which occurred in the last event loop, keyed
-	# by handle.
+	# The Hash of unhandled events which occurred in the last call to #poll,
+	# keyed by handle.
 	attr_reader :pendingEvents
 
 
-	### Register the specified IO object with the reactor for the given
-	### <tt>events</tt>. The reactor will test the given <tt>io</tt> for the
+	### Register the specified IO object with the reactor for events given as
+	### <tt>args</tt>. The reactor will test the given <tt>io</tt> for the
 	### events specified whenever #poll is called. See the #poll method for a
-	### list of valid events. If no <tt>events</tt> are specified, only
-	### <tt>:error</tt> events will be polled for.
+	### list of valid events. If no events are specified, only <tt>:error</tt>
+	### events will be polled for.
 	###
 	### If a <tt>handler</tt> is specified, it will be called whenever the
 	### <tt>io</tt> has any of the specified <tt>events</tt> occur to it. It
-	### should take two parameters: the <tt>io</tt> and the <tt>event</tt>.
+	### should take at least two parameters: the <tt>io</tt> and the event.
 	###
+	### If +args+ contains any objects except the Symbols '<tt>:read</tt>',
+	### '<tt>:write</tt>', or '<tt>:error</tt>', and a +handler+ is specified,
+	### they will be saved and passed to handler for each event.
+	### 
 	### Registering a handle will unregister any previously registered
-	### event/handler pairs associated with the handle.
-	def register( io, *events, &handler )
+	### event/handler+arguments pairs associated with the handle.
+	def register( io, *args, &handler )
+		events = [:read, :write, :error] & args
+		args -= events
+
 		self.unregister( io )
 		self.enableEvents( io, *events )
-		self.setHandler( io, &handler ) if handler
+		if handler
+			self.setHandler( io, *args, &handler )
+		else
+			self.setArgs( io, *args )
+		end
 
 		return self
 	end
@@ -126,10 +147,13 @@ class Reactor
 
 
 	### Set the handler for events on the given +io+ handle to the specified
-	### +handler+. Returns the previously-registered handler, if any.
-	def setHandler( io, &handler )
+	### +handler+. If any +args+ are present, they will be passed as an exploded
+	### array to the handler for each event. Returns the previously-registered
+	### handler, if any.
+	def setHandler( io, *args, &handler )
 		rval = @handles[ io ][:handler]
 		@handles[ io ][:handler] = handler
+		self.setArgs( io, *args )
 		return rval
 	end
 
@@ -138,7 +162,23 @@ class Reactor
 	def removeHandler( io )
 		rval = @handles[ io ][:handler]
 		@handles[ io ][:handler] = nil
+		self.removeArgs( io )
 		return rval
+	end
+
+
+	### Set the additional arguments to pass to the handler for the given +io+
+	### handle on each event to the given +args+.
+	def setArgs( io, *args )
+		rval = @handles[ io ][:args]
+		@handles[ io ][:args] = args
+		return rval
+	end
+
+
+	### Remove the arguments for the given handle to the given +args+.
+	def removeArgs( io )
+		return @handles[ io ][:args].clear
 	end
 
 
@@ -188,7 +228,7 @@ class Reactor
 	### those handles with events. If a block is given, it will be invoked once
 	### for each handle which doesn't have an explicit handler. If no block is
 	### given, events without explicit handlers are inserted into the reactor's
-	### #pendingEvents.
+	### <tt>pendingEvents</tt> attribute.
 	###
 	### The <tt>timeout</tt> argument is the number of floating-point seconds to
 	### wait for an event before returning (ie., fourth argument to the
@@ -212,10 +252,12 @@ class Reactor
 			eventedHandles.each {|io,events|
 				count += 1
 				events.each {|ev|
+					args = @handles[ io ][:args]
+
 					if @handles[ io ][:handler]
-						@handles[ io ][:handler].call( io, ev )
+						@handles[ io ][:handler].call( io, ev, *args )
 					elsif block_given?
-						yield( io, ev )
+						yield( io, ev, *args )
 					else
 						@pendingEvents[io].push( ev )
 					end
