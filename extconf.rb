@@ -122,7 +122,7 @@ depend:
 .PHONY: docs html test debugtest
 
 docs: 
-	$(RUBY) docs/makedocs.rb
+	$(RUBY) makedocs.rb
 
 html: docs
 
