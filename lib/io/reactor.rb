@@ -42,7 +42,7 @@
 #
 # == Version
 #
-#  $Id: reactor.rb,v 1.4 2002/04/17 21:18:30 deveiant Exp $
+#  $Id: reactor.rb,v 1.5 2002/04/17 21:34:44 deveiant Exp $
 # 
 
 require 'delegate'
@@ -92,8 +92,8 @@ class Poll
 
 
 	### Class constants
-	Version = /([\d\.]+)/.match( %q$Revision: 1.4 $ )[1]
-	Rcsid = %q$Id: reactor.rb,v 1.4 2002/04/17 21:18:30 deveiant Exp $
+	Version = /([\d\.]+)/.match( %q$Revision: 1.5 $ )[1]
+	Rcsid = %q$Id: reactor.rb,v 1.5 2002/04/17 21:34:44 deveiant Exp $
 
 	### Create and return new poll object.
 	def initialize
@@ -229,7 +229,7 @@ class Poll
 	### invoked once for each handle which doesn't have an explicit
 	### handler. This method returns the number of handles which had events
 	### occur.
-	def poll( timeout=-1 )
+	def poll( timeout=-1 ) # :yields: io, eventMask
 		raise TypeError, "Timeout must be Numeric, not a #{timeout.type.name}" unless
 			timeout.kind_of? Numeric
 		timeout = timeout.to_f
