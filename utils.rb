@@ -1,6 +1,6 @@
 #
 #	Install/distribution utility functions
-#	$Id: utils.rb,v 1.4 2003/07/21 06:55:26 deveiant Exp $
+#	$Id: utils.rb,v 1.5 2003/08/04 23:52:07 deveiant Exp $
 #
 #	Copyright (c) 2001-2003, The FaerieMUD Consortium.
 #
@@ -20,6 +20,14 @@ BEGIN {
 			$stderr.print prompt.chomp
 			return $stdin.gets.chomp
 		end
+	end
+
+	begin
+		require 'yaml'
+		$yaml = true
+	rescue LoadError => e
+		$stderr.puts "No YAML; try() will use .inspect instead."
+		$yaml = false
 	end
 }
 
@@ -70,6 +78,7 @@ module UtilityFunctions
 
 	# Create a string that contains the ANSI codes specified and return it
 	def ansiCode( *attributes )
+		return '' unless /(?:vt10[03]|xterm(?:-color)?|linux)/i =~ ENV['TERM']
 		attr = attributes.collect {|a| AnsiAttributes[a] ? AnsiAttributes[a] : nil}.compact.join(';')
 		if attr.empty? 
 			return ''
@@ -125,7 +134,7 @@ module UtilityFunctions
 
 	### Output <tt>msg</tt> to STDERR and flush it.
 	def message( msg )
-		$stderr.print msg
+		$stderr.print ansiCode( 'cyan' ) + msg + ansiCode( 'reset' )
 		$stderr.flush
 	end
 
@@ -275,6 +284,90 @@ module UtilityFunctions
 		vetManifest( readManifest(manifestFile), antimanifest )
 	end
 
+	### Given a documentation <tt>catalogFile</tt>, extract the title, if
+	### available, and return it. Otherwise generate a title from the name of
+	### the CVS module.
+	def findRdocTitle( catalogFile="docs/CATALOG" )
+
+		# Try extracting it from the CATALOG file from a line that looks like:
+		# Title: Foo Bar Module
+		title = findCatalogKeyword( 'title', catalogFile )
+
+		# If that doesn't work for some reason, try grabbing the name of the CVS
+		# repository the directory belongs to.
+		if title.nil? && File::directory?( "CVS" ) &&
+				File::exists?( "CVS/Repository" )
+			title = File::read( "CVS/Repository" ).chomp
+		end
+
+		# As a last resort, use the name of the project directory
+		if title.nil?
+			distdir = File::dirname( __FILE__ )
+			distdir = File::dirname( distdir ) if /docs$/ =~ distdir
+			title = File::basename( distdir )
+		end
+
+		return title
+	end
+
+	### Given a documentation <tt>catalogFile</tt>, extract the name of the file
+	### to use as the initally displayed page. If extraction fails, the
+	### +default+ will be used if it exists. Returns +nil+ if there is no main
+	### file to be found.
+	def findRdocMain( catalogFile="docs/CATALOG", default="README" )
+
+		# Try extracting it from the CATALOG file from a line that looks like:
+		# Main: Foo Bar Module
+		main = findCatalogKeyword( 'main', catalogFile )
+
+		# Try to make some educated guesses if that doesn't work
+		if main.nil?
+			basedir = File::dirname( __FILE__ )
+			basedir = File::dirname( basedir ) if /docs$/ =~ basedir
+			
+			if File::exists?( File::join(basedir, default) )
+				main = default
+			end
+		end
+
+		return main
+	end
+
+
+	### Given a documentation <tt>catalogFile</tt>, extract an upload URL for
+	### RDoc.
+	def findRdocUpload( catalogFile="docs/CATALOG" )
+		findCatalogKeyword( 'upload', catalogFile )
+	end
+
+
+	### Given a documentation <tt>catalogFile</tt>, extract a CVS web frontend
+	### URL for RDoc.
+	def findRdocCvsURL( catalogFile="docs/CATALOG" )
+		findCatalogKeyword( 'webcvs', catalogFile )
+	end
+
+
+	### Given a documentation <tt>catalogFile</tt>, try extracting the given
+	### +keyword+'s value from it. Keywords are lines that look like:
+	###   # <keyword>: <value>
+	### Returns +nil+ if the catalog file was unreadable or didn't contain the
+	### specified +keyword+.
+	def findCatalogKeyword( keyword, catalogFile="docs/CATALOG" )
+		val = nil
+
+		if File::exists? catalogFile
+			message "Extracting '#{keyword}' from CATALOG file (%s).\n" % catalogFile
+			File::foreach( catalogFile ) {|line|
+				debugMsg( "Examining line #{line.inspect}..." )
+				val = $1.strip and break if /^#\s*#{keyword}:\s*(.*)$/i =~ line
+			}
+		end
+
+		return val
+	end
+
+
 	### Given a documentation <tt>catalogFile</tt>, which is in the same format
 	### as that described by #readManifest, read and expand it, and then return
 	### a list of those files which appear to have RDoc documentation in
@@ -342,4 +435,50 @@ module UtilityFunctions
 		return cmdpipe.readlines
 	end
 
+	### Execute a block with $VERBOSE set to +false+, restoring it to its
+	### previous value before returning.
+	def verboseOff
+		raise LocalJumpError, "No block given" unless block_given?
+
+		thrcrit = Thread.critical
+		oldverbose = $VERBOSE
+		begin
+			Thread.critical = true
+			$VERBOSE = false
+			yield
+		ensure
+			$VERBOSE = oldverbose
+			Thread.critical = false
+		end
+	end
+
+
+	### Try the specified code block, printing the given 
+	def try( msg, bind=nil )
+		result = nil
+		message "Trying #{msg}..."
+
+		begin
+			rval = nil
+			if block_given?
+				rval = yield
+			else
+				file, line = caller(1)[0].split(/:/,2)
+				rval = eval( msg, bind, file, line.to_i )
+			end
+
+			if $yaml
+				result = rval.to_yaml
+			else
+				result = rval.inspect
+			end
+		rescue Exception => err
+			nicetrace = err.backtrace.delete_if {|frame|
+				/in `(try|eval)'/ =~ frame
+			}.join("\n\t")
+			result = err.message + "\n\t" + nicetrace
+		ensure
+			puts result
+		end
+	end
 end
