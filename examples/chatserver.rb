@@ -35,12 +35,13 @@
 #
 # == Version
 #
-#  $Id: chatserver.rb,v 1.3 2003/07/21 06:55:26 deveiant Exp $
+#  $Id: chatserver.rb,v 1.4 2003/08/04 23:53:32 deveiant Exp $
 # 
 
 require 'io/reactor'
 require 'socket'
 
+module Example
 
 ### Chatserver user class -- part of the chatserver example.
 class User
@@ -107,7 +108,8 @@ class User
 		@ibuffer << @socket.sysread( MTU )
 		$stderr.puts "Input buffer for user #{self} now: #@ibuffer" if $VERBOSE
 		while (( pos = @ibuffer.index EOL ))
-			$stderr.puts "Found terminating EOL. Splitting off 0..#{pos} of the input buffer." if $VERBOSE
+			$stderr.puts "Found terminating EOL. "\
+				"Splitting off 0..#{pos} of the input buffer." if $VERBOSE
 			rary << @ibuffer[ 0, pos ]
 			@ibuffer[ 0, pos + EOL.length ] = ''
 		end
@@ -156,7 +158,7 @@ class User
 	def connected?
 		@connected
 	end
-end
+end # class User
 
 
 ### Example chatserver class -- an extremely crude and simple chat server that
@@ -335,9 +337,10 @@ class Server
 		return rval
 	end
 
-end
+end # class Server
+end # module Example
 
-srv = Server::new( *ARGV )
+srv = Example::Server::new( *ARGV )
 $stderr.puts "Chat server listening on #{srv.socket.addr[2]} port #{srv.socket.addr[1]}"
 srv.eventLoop
 $stderr.puts "Chat server finished."
