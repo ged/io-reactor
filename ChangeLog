@@ -1,3 +1,133 @@
+2002-09-18 06:33  Michael Granger <ged@FaerieMUD.org>
+
+	* makedocs.rb (1.3):
+
+	- Removed dependence on as-yet-undistributed xhtml RDoc template.
+	
+2002-09-06 10:52  Michael Granger <ged@FaerieMUD.org>
+
+	* poll.c (1.4):
+
+	- Added interrupt-handling to the _poll call.
+	
+	- Added more-informative debugging.
+	
+2002-07-20 10:07  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/poll.rb (1.9):
+
+	- New method: #setMask().
+	
+	- New method: #callback().
+	
+	- New method: #args().
+	
+	- Implemented the #register() method in terms of the other setter methods to
+	  consolidate the maintenance of internal data structures.
+	
+	- Added missing callback *args to #setCallback().
+	
+	- Cleared up documentation for #register.
+	
+2002-07-20 10:03  Michael Granger <ged@FaerieMUD.org>
+
+	* examples/chatserver.rb (1.2):
+
+	- Changed name of user class to 'User' to avoid confusion about its role in the
+	  server.
+	
+2002-07-20 10:01  Michael Granger <ged@FaerieMUD.org>
+
+	* test.rb (1.5):
+
+	- Added test for the #callback method.
+	
+2002-07-20 10:01  Michael Granger <ged@FaerieMUD.org>
+
+	* makedocs.rb (1.2):
+
+	- Added template argument to make it use the xhtml template.
+	
+2002-07-19 10:29  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/poll.rb (1.8):
+
+	- Fixed a funny typo.
+	
+2002-07-18 21:58  Michael Granger <ged@FaerieMUD.org>
+
+	* CATALOG (1.1):
+
+	Initial commit.
+	
+2002-07-18 21:58  Michael Granger <ged@FaerieMUD.org>
+
+	* utils.rb (1.3):
+
+	- Fixed typo in vetManifest()
+	
+	- Added case to read the documentation CATALOG in the base directory if it's not
+	  in the docs/ directory.
+	
+2002-07-18 21:55  Michael Granger <ged@FaerieMUD.org>
+
+	* makesitedocs.rb (1.2):
+
+	- Merged some of the features from the MUES doc-gen script.
+	
+2002-07-18 21:52  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/poll.rb (1.7):
+
+	- Added callback arguments to the register() method.
+	
+2002-07-18 21:52  Michael Granger <ged@FaerieMUD.org>
+
+	* test.rb (1.4):
+
+	- Added test for new "with-args" register() method call.
+	
+2002-07-18 09:42  Michael Granger <ged@FaerieMUD.org>
+
+	* utils.rb (1.2):
+
+	- Added a debugMsg function.
+	
+	- Qualified all functions as module_functions.
+	
+2002-07-18 09:40  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/poll.rb (1.6):
+
+	- Fixed some typos
+	
+	- Added clarification and additional documentation for some methods.
+	
+2002-07-18 09:35  Michael Granger <ged@FaerieMUD.org>
+
+	* README (1.4):
+
+	- Fixed a typo.
+	
+2002-04-18 16:53  Michael Granger <ged@FaerieMUD.org>
+
+	* extconf.rb (1.4):
+
+	- Corrected a bug in the header =:)
+	
+2002-04-18 12:01  Michael Granger <ged@FaerieMUD.org>
+
+	* makedist.rb (1.1), makesitedocs.rb (1.1), utils.rb (1.1) (utags:
+	RELEASE_0_01):
+
+	Initial commit
+	
+2002-04-18 11:24  Michael Granger <ged@FaerieMUD.org>
+
+	* extconf.rb (1.3, RELEASE_0_01):
+
+	- Corrected path to the docs-generation script.
+	
 2002-04-18 10:23  Michael Granger <ged@FaerieMUD.org>
 
 	* makedocs.rb (1.1, RELEASE_0_01):
@@ -24,7 +154,7 @@
 	
 2002-04-18 08:43  Michael Granger <ged@FaerieMUD.org>
 
-	* extconf.rb (1.2, RELEASE_0_01):
+	* extconf.rb (1.2):
 
 	- Moved the ext/extconf.rb stuff into this one because the ext directory is
 	  going away.
@@ -40,17 +170,41 @@
 	- Modified installation section to use 'site-install' instead of 'install', and
 	  took stuff out that would have been redundant with the requires section.
 	
+2002-04-17 15:34  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/poll.rb (1.5, RELEASE_0_01):
+
+	- Added :yeilds: RDoc construct to #poll.
+	
 2002-04-17 15:20  Michael Granger <ged@FaerieMUD.org>
 
 	* README (1.2):
 
 	- Separated abstract from header.
 	
+2002-04-17 15:18  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/poll.rb (1.4):
+
+	- Clarified abstract.
+	
 2002-04-17 15:14  Michael Granger <ged@FaerieMUD.org>
 
 	* README (1.1):
 
 	Initial commit
+	
+2002-04-17 07:03  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/poll.rb (1.3):
+
+	- Fixed documentation for the EventMask bitwise operators.
+	
+2002-04-17 06:48  Michael Granger <ged@FaerieMUD.org>
+
+	* lib/poll.rb (1.2):
+
+	- Re-implemented after the first one was wiped out by extconf.
 	
 2002-04-17 06:47  Michael Granger <ged@FaerieMUD.org>
 
@@ -68,16 +222,22 @@
 
 	- Added lots of stuff, redesigned to match the new API
 	
+2002-04-17 06:45  Michael Granger <ged@FaerieMUD.org>
+
+	* examples/chatserver.rb (1.1, RELEASE_0_01):
+
+	Initial commit
+	
 2002-04-16 04:47  Michael Granger <ged@FaerieMUD.org>
 
-	* extconf.rb (1.1), poll.c (1.1), test.rb (1.1):
+	* extconf.rb (1.1), poll.c (1.1), test.rb (1.1), lib/poll.rb (1.1):
 
 	Initial revision
 	
 2002-04-16 04:47  Michael Granger <ged@FaerieMUD.org>
 
-	* extconf.rb (1.1.1.1), poll.c (1.1.1.1), test.rb (1.1.1.1) (utags:
-	IMPORT):
+	* extconf.rb (1.1.1.1), poll.c (1.1.1.1), test.rb (1.1.1.1),
+	lib/poll.rb (1.1.1.1) (utags: IMPORT):
 
 	Initial import
 	
