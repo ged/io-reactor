@@ -1,9 +1,9 @@
 #!/usr/bin/ruby
 #
 #	Ruby-Project Documentation Generation Script
-#	$Id: makesitedocs.rb,v 1.2 2002/07/19 03:55:15 deveiant Exp $
+#	$Id: makesitedocs.rb,v 1.3 2003/05/08 22:49:38 deveiant Exp $
 #
-#	Copyright (c) 2001,2002 The FaerieMUD Consortium.
+#	Copyright (c) 2001-2003 The FaerieMUD Consortium.
 #
 #	This is free software. You may use, modify, and/or redistribute this
 #	software under the terms of the Perl Artistic License. (See
@@ -54,7 +54,7 @@ opts.each {|opt,val|
 		$upload = unless val.empty?
 					  val
 				  else
-					  'file:///www/devEiate.org/public/code/Ruby-Poll'
+					  'ssh://oberon/www/devEiate.org/public/code/Ruby-Poll'
 				  end
 		debugMsg "Setting upload arg to #$upload"
 
