@@ -1,56 +1,35 @@
 
-= Ruby-Poll
+= IO-Reactor
 
-An object-oriented implementation of poll(2) for Ruby
+An implementation of the Reactor design pattern for multiplexed asynchronous
+single-thread IO.
 
 == Authors
 
  Michael Granger <ged@FaerieMUD.org>
 
 
-== General Information
+== Description
 
-The poll(2) function is a select()-like function that waits for interesting
-events to happen to any of an array of file descriptors. Ruby-Poll is an
-object-oriented implementation of that call which encapsulates the management
-and processing of the data structures involved in a Poll object. The object
-interface can be used to add, remove, and modify the file descriptors being
-polled and the bitmasks that determine what events they are interested in
-receiving, as well as optional event handler blocks or methods for each
-descriptor.
+This module is a pure-Ruby implementation of an asynchronous multiplexed IO
+Reactor which is based on the Reactor design pattern found in _Pattern-Oriented
+Software Architecture, Volume 2: Patterns for Concurrent and Networked
+Objects_. It allows a single thread to demultiplex and dispatch events from one
+or more IO objects to the appropriate handler.
 
-It's only been tested under Linux 2.4.x running on ix86, as that is the only
-platform I have available for testing. I'd be happy to test and/or modify it to
-work under other environments, assuming it has a libc with the poll() function
-and someone can provide a testing/development environment. Alternately, I'd be
-happy to accept patches for other platforms/OSes. If it works for you as-is on
-some other platform, I'd like to hear about that, too.
+This module used to be called Ruby-Poll, and used to use the poll(2) system
+call, but this strategy was not portable, and didn't work with Ruby's
+threads. It now uses IO::select, which should work everywhere Ruby does.
 
-
-== Caveats
-
-*IMPORTANT*: This is an *beta* release. It might blow up, compromise your
-security, write random data to sensitive portions of your hard drive, or
-otherwise fail to work as advertised. It is intended to be used by developers
-who are interested in helping out or curious onlookers who don't mind getting
-a bit wet.
-
-As mentioned above, it might not work under operating systems other than
-Linux, as that's the only environment I have available for testing.
-
-That said, I would greatly appreciate feedback on any aspect of this
-software. Suggestions, feature requests, questions, design critiques, and bug
-reports are most welcome. Relevant patches are particularly helpful, especially
-for platforms other than those mentioned above. I may be reached by email at
-<ged@FaerieMUD.org>.
+I would greatly appreciate feedback on any aspect of this software. Suggestions,
+feature requests, questions, design critiques, and bug reports are most
+welcome. Relevant patches and minimal test cases are particularly helpful. I may
+be reached by email at <ged@FaerieMUD.org>.
 
 
 == Requirements
 
-* Ruby >= 1.6.5
-* A C library with the poll() function.
-* A C compiler
-* The 'delegate' module (included with Ruby 1.7.x)
+* Ruby >= 1.8.0
 
 Optional:
 
@@ -60,32 +39,26 @@ Optional:
 
 == Installation
 
-  $ ruby extconf.rb
-  $ make
   $ su
-  # make site-install
+  # ruby install.rb
 
 If you have the Test::Unit module installed, you can run the test suite by
 doing:
 
-  $ make test
-
-If you have RDoc, you can make HTML documentation in docs/html by doing:
-
-  $ make docs
+  $ ruby test.rb
 
 
 == More Information
 
-You can find more information about Ruby-Poll, including the latest version, at
+You can find more information about IO-Reactor, including the latest version, at
 its project page:
 
-  http://www.devEiate.org/code/Ruby-Poll.shtml
+  http://www.devEiate.org/code/IO-Reactor.shtml
 
 
 == Legal
 
-Ruby-Poll is Open Source Software which is Copyright (c) 2001,2002 by The
+IO-Reactor is Open Source Software which is Copyright (c) 2001-2003 by The
 FaerieMUD Consortium.
 
 You may use, modify, and/or redistribute this software under the same terms as
@@ -96,7 +69,7 @@ INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND
 FITNESS FOR A PARTICULAR PURPOSE.
 
 
- $Id: README,v 1.4 2002/07/18 15:35:44 deveiant Exp $
+ $Id: README,v 1.5 2003/07/21 15:04:50 deveiant Exp $
 
 
 
