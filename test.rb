@@ -18,16 +18,15 @@
 #
 # == Version
 #
-#  $Id: test.rb,v 1.2 2002/04/17 12:46:08 deveiant Exp $
+#  $Id: test.rb,v 1.3 2002/04/18 14:44:42 deveiant Exp $
 # 
 #
 
-$:.unshift "lib", "ext", "tests"
+$:.unshift "lib", "tests"
 
 require 'test/unit'
 require 'poll'
 require 'socket'
-require 'tempfile'
 
 TMPFILE = "testfile.#{$$}"
 HOST	= 'localhost'
