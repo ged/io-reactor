@@ -19,58 +19,119 @@
 
 require 'mkmf'
 
-def rule(target, clean = nil)
-   wr = "#{target}:
-\t@for subdir in $(SUBDIRS); do \\
-\t\t$(MAKE) -C $${subdir} #{target}; \\
-\tdone;
-"
-   if clean != nil
-     # wr << "\t@-rm tmp/* tests/tmp/* 2> /dev/null\n"
-	  wr << "\t@-rm -f mkmf.log src/mkmf.log 2> /dev/null\n"
-	  wr << "\t@-rm -f src/depend 2> /dev/null\n"
-      wr << "\t@rm Makefile\n" if clean
-   end
-   wr
+### Print an error message and exit with an error condition
+def abort( msg )
+	$stderr.puts( msg )
+	exit 1
 end
 
-subdirs = Dir["*"].select do |subdir|
-   File.file?(subdir + "/extconf.rb")
+MSWINTEST1 = Proc::new {|func|
+	%{
+#include <windows.h>
+#include <winsock.h>
+int main() { return 0; }
+int t() { #{func}(); return 0; }
+	}
+}
+
+MSWINTEST2 = Proc::new {|func|
+	%{
+#include <windows.h>
+#include <winsock.h>
+int main() { return 0; }
+int t() { void ((*p)()); p = (void ((*)()))#{func}; return 0; }
+	}
+}
+
+GENERICTEST = Proc::new {|func|
+	%{
+int main() { return 0; }
+int t() { #{func}(); return 0; }
+	}
+}
+
+### Version of have_library() that doesn't append (for checking a library that
+### we already found, but may not be recent enough)
+def have_library_no_append(lib, func="main")
+	print "checking for %s() in -l%s... " % [ func, lib ]
+	$stdout.flush
+
+	if func && func != ""
+		tmplibs = append_library( $libs, lib )
+		if /mswin32|mingw/ =~ RUBY_PLATFORM
+			r = try_link(MSWINTEST1[func], tmplibs) || try_link(MSWINTEST2[func], tmplibs)
+		else
+			r = try_link(GENERICTEST[func], tmplibs)
+		end
+
+		unless r
+			print "no\n"
+			return false
+		end
+	else
+		raise "Empty library function specified"
+	end
+
+	print "yes\n"
+	return true
 end
 
-begin
-   make = open("Makefile", "w")
-   make.print <<-EOF
-SUBDIRS = #{subdirs.join(' ')}
 
-#{rule('all')}
-#{rule('clean', false)}
-#{rule('distclean', true)}
-#{rule('realclean', true)}
-#{rule('install')}
-#{rule('depend')}
-#{rule('site-install')}
-#{rule('unknown')}
-docs:
-	rdoc -S --title 'Ruby IO::Poll' --main README README src ext
+
+
+# Add some cflags
+$CFLAGS << ' -Wall '
+
+dir_config( "poll" )
+
+# Make sure we have the ODE library and header available
+have_library_no_append( "c", "poll" ) or
+	abort( "Your libc apparently doesn't have a poll()." )
+have_header( "poll.h" ) || have_header( "sys/poll.h" ) or
+	abort( "Can't find a suitable poll.h." )
+have_header( "limits.h" )
+
+# Write the Makefile
+create_makefile( "poll" )
+
+# Read the makefile in and fix the fscked-up lib install targets
+last_target = nil
+makefile = IO::readlines( "Makefile" ).collect {|line|
+	if line =~ /^(\S+):/
+		last_target = $1
+	end
+
+	if last_target =~ /site-install/
+		line.gsub!( %r{\$\(rubylibdir\)\$\(target_prefix\)/lib}, '$(target_prefix)$(sitelibdir)' )
+	elsif last_target =~ /install/
+		line.gsub!( %r{\$\(rubylibdir\)\$\(target_prefix\)/lib}, '$(target_prefix)$(rubylibdir)' )
+	end
+
+	line
+}
+
+
+# Now write the makefile back out and add some more targets to the end
+File.open( "Makefile", "w" ) {|make|
+	make.print makefile
+	make.print <<EOF
+
+depend:
+	$(CC) $(CFLAGS) $(CPPFLAGS) -MM *.c > depend
+
+.PHONY: docs html test debugtest
+
+docs: 
+	$(RUBY) docs/makedocs.rb
 
 html: docs
 
 test: all
-	ruby test.rb
+	$(RUBY) test.rb
 
 debugtest: clean all
-	ruby -wd test.rb
+	$(RUBY) -wd test.rb
 
-	EOF
-ensure
-   make.close
-end
+EOF
+}
 
-subdirs.each do |subdir|
-   STDERR.puts("#{$0}: Entering directory `#{subdir}'")
-   Dir.chdir(subdir)
-   system("#{Config::CONFIG['RUBY_INSTALL_NAME']} extconf.rb " + ARGV.join(" "))
-   Dir.chdir("..")
-   STDERR.puts("#{$0}: Leaving directory `#{subdir}'")
-end
