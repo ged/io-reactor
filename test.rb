@@ -18,7 +18,7 @@
 #
 # == Version
 #
-#  $Id: test.rb,v 1.4 2002/07/19 03:52:09 deveiant Exp $
+#  $Id: test.rb,v 1.5 2002/07/20 16:01:37 deveiant Exp $
 # 
 #
 
@@ -242,6 +242,16 @@ class PollTestCase < Test::Unit::TestCase
 		assert_equal 1, @poll.handles( Poll::OUT ).length
 		assert_equal $stdout, @poll.handles( Poll::OUT )[0]
 		assert_equal 2, @poll.handles( Poll::PRI ).length
+	end
+
+	# Test the #callback method
+	def test_14Callback
+		testProc = Proc::new {|io,eventMask|
+			$stderr.puts "Default handler got #{io.inspect} with mask #{eventMask}" if $VERBOSE
+		}
+		@poll.register( $stdout, Poll::OUT|Poll::PRI, testProc )
+
+		assert_equal testProc, @poll.callback( $stdout )
 	end
 
 end # class PollTestCase
