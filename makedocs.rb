@@ -1,7 +1,7 @@
 #!/usr/bin/ruby
 #
 #	MUES Documentation Generation Script
-#	$Id: makedocs.rb,v 1.2 2002/07/20 16:01:16 deveiant Exp $
+#	$Id: makedocs.rb,v 1.3 2002/09/18 12:33:35 deveiant Exp $
 #
 #	Copyright (c) 2001,2002 The FaerieMUD Consortium.
 #
@@ -55,7 +55,6 @@ flags = [
 	'--main', 'README',
 	'--fmt', 'html',
 	'--include', 'docs',
-	'--template', 'xhtml',
 	'--op', $docsdir,
 	'--title', "Ruby-Poll"
 ]
