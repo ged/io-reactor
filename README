@@ -1,6 +1,7 @@
 
-= Ruby-Poll - an object-oriented implementation of poll(2) for Ruby
+= Ruby-Poll
 
+An object-oriented implementation of poll(2) for Ruby
 
 == Authors
 
@@ -74,7 +75,7 @@ INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTIBILITY AND
 FITNESS FOR A PARTICULAR PURPOSE.
 
 
- $Id: README,v 1.1 2002/04/17 21:14:02 deveiant Exp $
+ $Id: README,v 1.2 2002/04/17 21:20:32 deveiant Exp $
 
 
 
