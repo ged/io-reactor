@@ -42,7 +42,7 @@
 #
 # == Version
 #
-#  $Id: reactor.rb,v 1.6 2002/07/18 15:40:39 deveiant Exp $
+#  $Id: reactor.rb,v 1.7 2002/07/19 03:52:47 deveiant Exp $
 # 
 
 require 'delegate'
@@ -92,8 +92,8 @@ class Poll
 
 
 	### Class constants
-	Version = /([\d\.]+)/.match( %q$Revision: 1.6 $ )[1]
-	Rcsid = %q$Id: reactor.rb,v 1.6 2002/07/18 15:40:39 deveiant Exp $
+	Version = /([\d\.]+)/.match( %q$Revision: 1.7 $ )[1]
+	Rcsid = %q$Id: reactor.rb,v 1.7 2002/07/19 03:52:47 deveiant Exp $
 
 	### Create and return new poll object.
 	def initialize
@@ -112,8 +112,9 @@ class Poll
 	### Method or Proc object) or a <tt>block</tt> is given, it will be called
 	### with <tt>io</tt> and the mask of the event/s whenever #poll generates
 	### any events for <tt>io</tt>. If the <tt>callback</tt> parameter is given,
-	### the <tt>block</tt> is ignored. The following event masks can be set in
-	### the <tt>eventMask</tt>:
+	### the <tt>block</tt> is ignored. Any <tt>arguments</tt> specified are
+	### passed to the callback as the third and succeeding arguments. The
+	### following event masks can be set in the <tt>eventMask</tt>:
 	### [<tt>Poll::IN</tt>]
 	###   Data other than high-priority data may be read without blocking.
 	### [<tt>Poll::PRI</tt>]
@@ -145,7 +146,7 @@ class Poll
 	###   Same as Poll::OUT.
 	### [<tt>Poll::WRBAND</tt>]
 	###   Priority data (priority band greater than 0) may be written.
-	def register( io, eventMask, callback=nil, &block )
+	def register( io, eventMask, callback=nil, *arguments, &block )
 		
 		raise TypeError, "No implicit conversion to IO from #{io.type.name}" unless
 			io.kind_of? IO
@@ -155,7 +156,7 @@ class Poll
 
 		# Set the callback, if given, else just make sure its clear
 		if callback || block
-			@callbacks[ io ] = callback || block
+			@callbacks[ io ] = { :callback => (callback || block), :args => arguments }
 		else
 			@callbacks.delete( io )
 		end
@@ -277,7 +278,10 @@ class Poll
 			# with it, or failing that, any provided block
 			@events.each {|io,evmask|
 				if @callbacks.has_key?( io )
-					@callbacks[ io ].call( io, EventMask::new(evmask) )
+					args = @callbacks[ io ][ :args ]
+					@callbacks[ io ][ :callback ].call( io,
+													    EventMask::new(evmask),
+													    *args )
 				elsif block_given?
 					yield( io, EventMask::new(evmask) )
 				end
