@@ -18,7 +18,7 @@
 #
 # == Version
 #
-#  $Id: test.rb,v 1.3 2002/04/18 14:44:42 deveiant Exp $
+#  $Id: test.rb,v 1.4 2002/07/19 03:52:09 deveiant Exp $
 # 
 #
 
@@ -77,7 +77,7 @@ class PollTestCase < Test::Unit::TestCase
 	def test_03RegisterIO
 		assert_nothing_raised { @poll.register $stdout, Poll::OUT }
 		assert_nothing_raised { @poll.add $stdout, Poll::OUT|Poll::PRI }
-		assert @poll.registered? $stdout
+		assert @poll.registered?( $stdout )
 		assert_equal Poll::OUT|Poll::PRI, @poll.mask( $stdout )
 	end
 
@@ -86,7 +86,7 @@ class PollTestCase < Test::Unit::TestCase
 	def test_04RegisterFilehandle
 		assert_nothing_raised { @poll.register @tmpfile, Poll::PRI|Poll::OUT }
 		assert_nothing_raised { @poll.add @tmpfile, Poll::PRI }
-		assert @poll.registered? @tmpfile
+		assert @poll.registered?( @tmpfile )
 		assert_equal Poll::PRI, @poll.mask( @tmpfile )
 	end
 
@@ -95,7 +95,7 @@ class PollTestCase < Test::Unit::TestCase
 	def test_05RegisterSocket
 		assert_nothing_raised { @poll.register @sock, Poll::PRI|Poll::OUT|Poll::IN }
 		assert_nothing_raised { @poll.add @sock, Poll::PRI|Poll::IN }
-		assert @poll.registered? @sock
+		assert @poll.registered?( @sock )
 		assert_equal Poll::PRI|Poll::IN, @poll.mask( @sock )
 	end
 
@@ -112,12 +112,38 @@ class PollTestCase < Test::Unit::TestCase
 	end
 
 
+	# Test registration with a callback as an inline block and a callback arg
+	def test_06b_RegisterWithBlockAndArg
+		assert_nothing_raised {
+			@poll.register($stdout, Poll::OUT, nil, "foo") {|io,eventMask,arg|
+				$stderr.puts "Got an output event for STDOUT"
+			}
+		}
+		assert @poll.has_callback?( $stdout ), "has_callback? returned false"
+		assert @poll.hasCallback?( $stdout ), "hasCallback? returned false"
+	end
+
+
 	# Test registration with a Proc argument
 	def test_07RegisterWithProc
 		assert_nothing_raised {
 			@poll.register $stdout,
 				Poll::OUT,
-				Proc::new {|io,eventMask| $stderr.puts "Got an output event for STDOUT"}
+				Proc::new {|io,eventMask| $stderr.puts "Got an output event for STDOUT"},
+				"foo"
+		}
+		assert @poll.has_callback?( $stdout ), "has_callback? returned false"
+		assert @poll.hasCallback?( $stdout ), "hasCallback? returned false"
+	end
+
+
+	# Test registration with a Proc argument and a callback arg
+	def test_07RegisterWithProcAndArg
+		assert_nothing_raised {
+			@poll.register $stdout,
+				Poll::OUT,
+				Proc::new {|io,eventMask| $stderr.puts "Got an output event for STDOUT"},
+				"foo"
 		}
 		assert @poll.has_callback?( $stdout ), "has_callback? returned false"
 		assert @poll.hasCallback?( $stdout ), "hasCallback? returned false"
@@ -128,6 +154,16 @@ class PollTestCase < Test::Unit::TestCase
 	def test_08RegisterWithMethod
 		assert_nothing_raised {
 			@poll.register $stdout, Poll::OUT, $stderr.method( :puts )
+		}
+		assert @poll.has_callback?( $stdout ), "has_callback? returned false"
+		assert @poll.hasCallback?( $stdout ), "hasCallback? returned false"
+	end
+
+
+	# Test registration with a Method argument and a callback arg
+	def test_08RegisterWithMethodAndArg
+		assert_nothing_raised {
+			@poll.register $stdout, Poll::OUT, $stderr.method( :puts ), "foo"
 		}
 		assert @poll.has_callback?( $stdout ), "has_callback? returned false"
 		assert @poll.hasCallback?( $stdout ), "hasCallback? returned false"
