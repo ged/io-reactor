@@ -42,7 +42,7 @@
 #
 # == Version
 #
-#  $Id: poll.rb,v 1.5 2002/04/17 21:34:44 deveiant Exp $
+#  $Id: poll.rb,v 1.6 2002/07/18 15:40:39 deveiant Exp $
 # 
 
 require 'delegate'
@@ -68,22 +68,22 @@ class Poll
 			( self & otherNum ).nonzero?
 		end
 
-		### Returns a new EventMask aftering ORing the receiver with the
-		### specified value.
+		### Returns a new EventMask after ORing the receiver with the specified
+		### value.
 		def |( otherNum )
 			otherNum = otherNum.to_i
 			return EventMask::new( @mask | otherNum )
 		end
 
-		### Returns a new EventMask aftering ANDing the receiver with the
-		### specified value.
+		### Returns a new EventMask after ANDing the receiver with the specified
+		### value.
 		def &( otherNum )
 			otherNum = otherNum.to_i
 			return EventMask::new( @mask & otherNum )
 		end
 
-		### Returns a new EventMask aftering XORing the receiver with the
-		### specified value.
+		### Returns a new EventMask after XORing the receiver with the specified
+		### value.
 		def ^( otherNum )
 			otherNum = otherNum.to_i
 			return EventMask::new( @mask ^ otherNum )
@@ -92,8 +92,8 @@ class Poll
 
 
 	### Class constants
-	Version = /([\d\.]+)/.match( %q$Revision: 1.5 $ )[1]
-	Rcsid = %q$Id: poll.rb,v 1.5 2002/04/17 21:34:44 deveiant Exp $
+	Version = /([\d\.]+)/.match( %q$Revision: 1.6 $ )[1]
+	Rcsid = %q$Id: poll.rb,v 1.6 2002/07/18 15:40:39 deveiant Exp $
 
 	### Create and return new poll object.
 	def initialize
@@ -109,10 +109,42 @@ class Poll
 
 	### Register the specified IO object with the specified
 	### <tt>eventMask</tt>. If the optional <tt>callback</tt> parameter (a
-	### Method or Proc object) or a block is given, it will be called with
-	### <tt>io</tt> and the mask of the event/s whenever #poll generates any
-	### events for <tt>io</tt>. If the <tt>callback</tt> parameter is given, the
-	### <tt>block</tt> is ignored.
+	### Method or Proc object) or a <tt>block</tt> is given, it will be called
+	### with <tt>io</tt> and the mask of the event/s whenever #poll generates
+	### any events for <tt>io</tt>. If the <tt>callback</tt> parameter is given,
+	### the <tt>block</tt> is ignored. The following event masks can be set in
+	### the <tt>eventMask</tt>:
+	### [<tt>Poll::IN</tt>]
+	###   Data other than high-priority data may be read without blocking.
+	### [<tt>Poll::PRI</tt>]
+	###   High-priority data may be received without blocking.
+	### [<tt>Poll::OUT</tt>]
+	###   Normal data (priority band equals 0) may be written without blocking.
+	###
+	### The following masks are ignored in the <tt>eventMask</tt>, as they are
+	### always implicitly set, but they may be specified in the handler
+	### <tt>callback</tt> or <tt>block</tt> to trap the conditions they
+	### represent:
+	### [<tt>Poll::ERR</tt>]
+	###   An error has occurred on the device.
+	### [<tt>Poll::HUP</tt>]
+	###   The device has been disconnected. This event and Poll::OUT are
+	###   mutually exclusive; a device can never be writable once a hangup has
+	###   occurred. However, this event and Poll::IN, Poll::RDNORM,
+	###   Poll::RDBAND, or Poll::PRI are not mutually exclusive.
+	### [<tt>Poll::NVAL</tt>]
+	###   The <tt>io</tt> object specified is invalid -- it has been closed, has
+	###   a bad file descriptor, etc.
+	###
+	### If your operating system defines them, these masks are also available:
+	### [<tt>Poll::RDNORM</tt>]
+	###   Normal data (priority band equals 0) may be read without blocking.
+	### [<tt>Poll::RDBAND</tt>]
+	###   Data from a non-zero priority band may be read without blocking.
+	### [<tt>Poll::WRNORM</tt>]
+	###   Same as Poll::OUT.
+	### [<tt>Poll::WRBAND</tt>]
+	###   Priority data (priority band greater than 0) may be written.
 	def register( io, eventMask, callback=nil, &block )
 		
 		raise TypeError, "No implicit conversion to IO from #{io.type.name}" unless
@@ -226,9 +258,11 @@ class Poll
 	### Call the system-level poll function with the handles registered to the
 	### receiver. Any callbacks specified when the handles were registered are
 	### run for those handles with events. If a block is given, it will be
-	### invoked once for each handle which doesn't have an explicit
-	### handler. This method returns the number of handles which had events
-	### occur.
+	### invoked once for each handle which doesn't have an explicit handler. The
+	### <tt>timeout</tt> argument is the number of floating-point seconds to
+	### wait for an event before returning; negative timeout values will cause
+	### #poll to block until there is at least one event to report. This method
+	### returns the number of handles on which one or more events occurred.
 	def poll( timeout=-1 ) # :yields: io, eventMask
 		raise TypeError, "Timeout must be Numeric, not a #{timeout.type.name}" unless
 			timeout.kind_of? Numeric
