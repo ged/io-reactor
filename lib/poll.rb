@@ -42,7 +42,7 @@
 #
 # == Version
 #
-#  $Id: poll.rb,v 1.9 2002/07/20 16:07:01 deveiant Exp $
+#  $Id: poll.rb,v 1.10 2002/10/21 03:47:01 deveiant Exp $
 # 
 
 require 'delegate'
@@ -92,8 +92,8 @@ class Poll
 
 
 	### Class constants
-	Version = /([\d\.]+)/.match( %q$Revision: 1.9 $ )[1]
-	Rcsid = %q$Id: poll.rb,v 1.9 2002/07/20 16:07:01 deveiant Exp $
+	Version = /([\d\.]+)/.match( %q$Revision: 1.10 $ )[1]
+	Rcsid = %q$Id: poll.rb,v 1.10 2002/10/21 03:47:01 deveiant Exp $
 
 	### Create and return new poll object.
 	def initialize
@@ -148,9 +148,7 @@ class Poll
 	### [<tt>Poll::WRBAND</tt>]
 	###   Priority data (priority band greater than 0) may be written.
 	def register( io, eventMask, callback=nil, *arguments, &block )
-		raise TypeError, "No implicit conversion to IO from #{io.type.name}" unless
-			io.kind_of? IO
-		raise TypeError, "#{io.type.name} does not appear to be file-descriptor-based" unless
+		raise TypeError, "#{io.class.name} does not appear to be file-descriptor-based" unless
 			io.respond_to?( :fileno ) && io.fileno
 
 		# Clear any old events for this handle
