@@ -1,8 +1,8 @@
 #
 #	Install/distribution utility functions
-#	$Id: utils.rb,v 1.1 2002/04/18 18:01:03 deveiant Exp $
+#	$Id: utils.rb,v 1.2 2002/07/18 15:42:16 deveiant Exp $
 #
-#	Copyright (c) 2001, The FaerieMUD Consortium.
+#	Copyright (c) 2001, 2002, The FaerieMUD Consortium.
 #
 #	This is free software. You may use, modify, and/or redistribute this
 #	software under the terms of the Perl Artistic License. (See
@@ -48,6 +48,11 @@ module UtilityFunctions
 		'cyan'       => 36,   'on_cyan'    => 46, 
 		'white'      => 37,   'on_white'   => 47
 	}
+
+	###############
+	module_function
+	###############
+
 	def ansiCode( *attributes )
 		attr = attributes.collect {|a| AnsiAttributes[a] ? AnsiAttributes[a] : nil}.compact.join(';')
 		if attr.empty? 
@@ -90,6 +95,12 @@ module UtilityFunctions
 	def message( msg )
 		$stdout.print msg
 		$stdout.flush
+	end
+
+	def debugMsg( msg )
+		msg.chomp!
+		$stderr.puts ansiCode( 'bold', 'red' ) + msg + ansiCode( 'reset' )
+		$stderr.flush
 	end
 
 	def replaceMessage( *msg )
