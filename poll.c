@@ -1,6 +1,6 @@
 /*
  *		poll.c - A poll() implementation for Ruby
- *		$Id: poll.c,v 1.2 2002/04/17 12:47:29 deveiant Exp $
+ *		$Id: poll.c,v 1.3 2002/04/18 16:23:16 deveiant Exp $
  *
  *		Author: Michael Granger <ged@FaerieMUD.org>
  *		Copyright (c) 2002 The FaerieMUD Consortium. All rights reserved.
@@ -64,9 +64,18 @@ poll_debug(fmt, va_alist)
  * Backend function
  * ------------------------------------------------------- */
 
+
+/**
+ * _poll( handleArray, timeout )
+ * --
+ * Call the system poll() function with an fdset made from the specified
+ * handleArray (an Array of IO or derivative objects), and the timeout (in
+ * milliseconds) specified. Returns a Hash with key-value pairs of the handles
+ * which had events and the event mask which occurred to it.
+ */
 VALUE
-_poll( self, fdArray, timeoutArg )
-	 VALUE self, fdArray, timeoutArg;
+_poll( self, handleArray, timeoutArg )
+	 VALUE self, handleArray, timeoutArg;
 {
 #ifdef HAVE_POLL_H
   unsigned long fdCount;
@@ -77,8 +86,8 @@ _poll( self, fdArray, timeoutArg )
   OpenFile *fptr;
   
   // Make sure the first arg is an array, then get its length
-  Check_Type( fdArray, T_ARRAY );
-  fdCount = (unsigned long)RARRAY( fdArray )->len;
+  Check_Type( handleArray, T_ARRAY );
+  fdCount = (unsigned long)RARRAY( handleArray )->len;
   poll_debug( "Got %d handles for polling.", fdCount );
 
   // Get the timeout
@@ -90,7 +99,7 @@ _poll( self, fdArray, timeoutArg )
 
   // Iterate over the handles in the list and add each to the pollfd array
   for ( i = 0 ; i < fdCount ; i++ ) {
-	handlePair = rb_ary_entry( fdArray, i );
+	handlePair = rb_ary_entry( handleArray, i );
 	GetOpenFile( rb_ary_entry(handlePair, 0), fptr );
 	fds[i].fd = fileno(fptr->f);
 	fds[i].events = NUM2INT( rb_ary_entry(handlePair, 1) );
@@ -108,7 +117,7 @@ _poll( self, fdArray, timeoutArg )
 	// get added to the event hash.
 	for ( i = 0 ; i < fdCount ; i++ ) {
 	  if ( fds[i].revents != 0 ) {
-		handlePair = rb_ary_entry( fdArray, i );
+		handlePair = rb_ary_entry( handleArray, i );
 		rb_hash_aset( evHash, rb_ary_entry(handlePair,0), INT2NUM(fds[i].revents) );
 	  }
 	}
