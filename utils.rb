@@ -1,6 +1,7 @@
+#!/usr/bin/ruby -w
 #
 #	Install/distribution utility functions
-#	$Id: utils.rb,v 1.2 2002/07/18 15:42:16 deveiant Exp $
+#	$Id: utils.rb,v 1.3 2002/07/19 03:58:24 deveiant Exp $
 #
 #	Copyright (c) 2001, 2002, The FaerieMUD Consortium.
 #
@@ -181,7 +182,7 @@ module UtilityFunctions
 		return filelist
 	end
 
-	def vetManifest( filelist, antimanifest=ANITMANIFEST )
+	def vetManifest( filelist, antimanifest=ANTIMANIFEST )
 		origLength = filelist.length
 
 		for regex in antimanifest
@@ -200,6 +201,9 @@ module UtilityFunctions
 		if File.exists? "docs/CATALOG"
 			message "Using docs/CATALOG\n"
 			startlist = getVettedManifest( "docs/CATALOG" )
+		elsif File.exists? "CATALOG"
+			message "Using CATALOG\n"
+			startlist = getVettedManifest( "CATALOG" )
 		else
 			message "Using default MANIFEST\n"
 			startlist = getVettedManifest()
