@@ -35,15 +35,15 @@
 #
 # == Version
 #
-#  $Id: chatserver.rb,v 1.1 2002/04/17 12:45:30 deveiant Exp $
+#  $Id: chatserver.rb,v 1.2 2002/07/20 16:03:01 deveiant Exp $
 # 
 
 require 'poll'
 require 'socket'
 
 
-### Chat client class
-class Client
+### Chatserver user class -- part of the chatserver example.
+class User
 
 	MTU	 = 4096
 	CR   = "\015"
@@ -52,7 +52,7 @@ class Client
 	
 	PROMPT = 'chat> '
 
-	### Create and return a client object which will use the specified
+	### Create and return a user object which will use the specified
 	### <tt>socket</tt> and <tt>pollObj</tt>.
 	def initialize( socket, server )
 		@socket = socket
@@ -68,13 +68,13 @@ class Client
 	attr_reader :socket, :server, :ibuffer, :obuffer
 
 
-	### Return a stringified version of the client
+	### Return a stringified version of the user
 	def to_s
 		"%s:%d" % [ @peerHost, @peerPort ]
 	end
 
 
-	### Add the specified string to the client's output buffer and turn on
+	### Add the specified string to the user's output buffer and turn on
 	### output events.
 	def addOutput( string )
 		@obuffer << string.chomp << EOL
@@ -92,7 +92,7 @@ class Client
 	end
 
 
-	### Write a prompt to the client
+	### Write a prompt to the user
 	def prompt
 		@obuffer << PROMPT
 		@server.pollObj.addMask( @socket, Poll::WRNORM )
@@ -105,7 +105,7 @@ class Client
 	def readInput
 		rary = []
 		@ibuffer << @socket.sysread( MTU )
-		$stderr.puts "Input buffer for client #{self} now: #@ibuffer" if $VERBOSE
+		$stderr.puts "Input buffer for user #{self} now: #@ibuffer" if $VERBOSE
 		while (( pos = @ibuffer.index EOL ))
 			$stderr.puts "Found terminating EOL. Splitting off 0..#{pos} of the input buffer." if $VERBOSE
 			rary << @ibuffer[ 0, pos ]
@@ -114,7 +114,7 @@ class Client
 
 		return rary
 	rescue EOFError
-		@server.disconnectClient( self )
+		@server.disconnectUser( self )
 		return []
 	end
 
@@ -124,7 +124,7 @@ class Client
 		case evmask
 
 		when Poll::ERR|Poll::HUP|Poll::NVAL
-			@server.disconnectClient( self )
+			@server.disconnectUser( self )
 			
 		when Poll::RDNORM
 			input = readInput()
@@ -139,7 +139,7 @@ class Client
 	end
 
 
-	### Disconnect the client
+	### Disconnect the user
 	def disconnect( msg='' )
 		@connected = false
 		unless msg.empty?
@@ -152,14 +152,15 @@ class Client
 	end
 
 
-	### Returns true if the client is still connected
+	### Returns true if the user is still connected
 	def connected?
 		@connected
 	end
 end
 
 
-### Chat server class
+### Example chatserver class -- an extremely crude and simple chat server that
+### demonstrates how to use Poll to do multiplexing IO in a single thread.
 class Server
 
 	BANNER = <<-EOF
@@ -174,7 +175,7 @@ class Server
 			Poll.const_defined?( :RDNORM ) && Poll.const_defined?( :WRNORM )
 
 		@socket			= TCPServer::new( listenHost, listenPort )
-		@clients		= []
+		@users			= []
 		@pollObj		= Poll::new
 		@pollInterval	= interval
 		@shuttingDown	= false
@@ -183,7 +184,7 @@ class Server
 	end
 
 	# Server attributes
-	attr_reader :pollObj, :clients, :socket
+	attr_reader :pollObj, :users, :socket
 
 
 	### Main server loop
@@ -191,7 +192,7 @@ class Server
 
 		trap( "INT" ) { shutdown("Server caught SIGINT") }
 		trap( "TERM" ) { shutdown("Server caught SIGTERM") }
-		trap( "HUP" ) { disconnectAllClients(">>> Server reset <<<") }
+		trap( "HUP" ) { disconnectAllUsers(">>> Server reset <<<") }
 
 		until @shuttingDown
 			eventCount = @pollObj.poll( @pollInterval )
@@ -221,87 +222,87 @@ class Server
 
 		when Poll::RDNORM
 			clSock = socket.accept
-			client = Client::new( clSock, self )
-			$stderr.puts "Accepted connection from #{client}"
-			@pollObj.register clSock, Poll::RDNORM, client.method(:handlePollEvent)
-			client.addOutput( BANNER )
-			client.prompt
-			broadcastMsg( "[New connection: #{client}]" )
-			@clients << client
+			user = User::new( clSock, self )
+			$stderr.puts "Accepted connection from #{user}"
+			@pollObj.register clSock, Poll::RDNORM, user.method(:handlePollEvent)
+			user.addOutput( BANNER )
+			user.prompt
+			broadcastMsg( "[New connection: #{user}]" )
+			@users << user
 
 		end
 	end
 
 
-	### Process the specified input from the specified client
-	def processInput( client, *inputStrings )
+	### Process the specified input from the specified user
+	def processInput( user, *inputStrings )
 		inputStrings.each {|str|
 			case str
 
 			when %r{^/(\w+)\s*(.*)}
-				handleCommand( client, $1, $2 )
+				handleCommand( user, $1, $2 )
 
 			else
-				client.addOutput( "You>> #{str}" )
-				broadcastMsgFrom( client, str )
+				user.addOutput( "You>> #{str}" )
+				broadcastMsgFrom( user, str )
 			end
 		}
 
-		client.prompt if client.connected?
+		user.prompt if user.connected?
 	end
 
 
-	### Handle the specified command from the specified client
-	def handleCommand( client, command, args )
+	### Handle the specified command from the specified user
+	def handleCommand( user, command, args )
 		case command
 
 		when /quit/
-			disconnectClient( client, 'Quit' )
+			disconnectUser( user, 'Quit' )
 			
 		when /shutdown/
 			shutdown()
 
 		when /who/
-			client.addOutput( self.wholist(client) )
+			user.addOutput( self.wholist(user) )
 
 		else
-			client.addOutput("Unknown command '#{command}'")
+			user.addOutput("Unknown command '#{command}'")
 		end
 	end
 
 
-	### Broadcast the specified message to all connected clients
+	### Broadcast the specified message to all connected users
 	def broadcastMsg( msg )
-		@clients.each {|cl|
+		@users.each {|cl|
 			cl.addOutput( msg )
 		}
 	end
 
 
-	### Broadcast the specified message from the specified client
-	def broadcastMsgFrom( client, msg )
-		clientDesc = client.to_s
+	### Broadcast the specified message from the specified user
+	def broadcastMsgFrom( user, msg )
+		userDesc = user.to_s
 
-		@clients.each {|cl|
-			next if cl == client
-			cl.addOutput( "#{clientDesc}>> #{msg}" )
+		@users.each {|cl|
+			next if cl == user
+			cl.addOutput( "#{userDesc}>> #{msg}" )
 		}
 	end
 
 
-	### Disconnect the specified client
-	def disconnectClient( client, msg='' )
-		@clients -= [ client ]
-		@pollObj.unregister client.socket
-		client.disconnect( msg )
-		broadcastMsg( "#{client.to_s} Disconnected." )
+	### Disconnect the specified user
+	def disconnectUser( user, msg='' )
+		@users -= [ user ]
+		@pollObj.unregister user.socket
+		user.disconnect( msg )
+		broadcastMsg( "#{user.to_s} Disconnected." )
 	end
 
 
-	### Disconnect all connected clients
-	def disconnectAllClients( msg )
-		@clients.each {|cl| cl.disconnect(msg) }
-		@clients.clear
+	### Disconnect all connected users
+	def disconnectAllUsers( msg )
+		@users.each {|cl| cl.disconnect(msg) }
+		@users.clear
 	end
 
 
@@ -313,20 +314,20 @@ class Server
 			@socket.shutdown
 		rescue
 		end
-		disconnectAllClients( msg )
+		disconnectAllUsers( msg )
 		begin
 			@socket.close
 		rescue
 		end
 	end
 
-	### Build and return a list of connected clients for the specified client.
-	def wholist( client )
+	### Build and return a list of connected users for the specified user.
+	def wholist( user )
 		rval = "[Connected Users]\n" <<
-			"  *#{client}*\n"
-		@clients.each {|cl|
-			next if cl == client
-			rval << "  #{cl}\n"
+			"  *#{user}*\n"
+		@users.each {|u|
+			next if u == user
+			rval << "  #{u}\n"
 		}
 
 		return rval
