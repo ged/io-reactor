@@ -2,12 +2,12 @@
 # = chatserver.rb
 # 
 # This is an extremely crude and simple single-threaded multiplexing chat
-# server. It (hopefully) demonstrates how to use a Poll object to do IO
+# server. It (hopefully) demonstrates how to use a IO::Reactor object to do IO
 # multiplexing with events.
 #
 # == Synopsis
 #
-#   $ chatserver.rb [HOST [PORT [POLLDELAY]]]
+#   $ chatserver.rb [HOST [PORT [LOOPTIMEOUT]]]
 #
 # [HOST]
 #   The host or IP the server will bind to
@@ -15,16 +15,16 @@
 # [PORT]
 #   The port the server will listen on
 #
-# [POLLDELAY]
+# [LOOPTIMEOUT]
 #   The number of floating-point seconds between polls. Specifying -1 (or any
-#   negative number, really) here will make the server call poll() in blocking
-#   mode.
+#   negative number, really) here will make the server's event loop block on the
+#   call to #poll.
 #
 # == Author
 # 
 # Michael Granger <ged@FaerieMUD.org>
 # 
-# Copyright (c) 2002 The FaerieMUD Consortium. All rights reserved.
+# Copyright (c) 2002, 2003 The FaerieMUD Consortium. All rights reserved.
 # 
 # This program is free software. You may use, modify, and/or redistribute this
 # software under the same terms as Ruby itself.
@@ -35,10 +35,10 @@
 #
 # == Version
 #
-#  $Id: chatserver.rb,v 1.2 2002/07/20 16:03:01 deveiant Exp $
+#  $Id: chatserver.rb,v 1.3 2003/07/21 06:55:26 deveiant Exp $
 # 
 
-require 'poll'
+require 'io/reactor'
 require 'socket'
 
 
@@ -78,7 +78,7 @@ class User
 	### output events.
 	def addOutput( string )
 		@obuffer << string.chomp << EOL
-		@server.pollObj.addMask( @socket, Poll::WRNORM )
+		@server.reactor.enableEvents( @socket, :write )
 	end
 	alias :<< :addOutput
 
@@ -95,7 +95,7 @@ class User
 	### Write a prompt to the user
 	def prompt
 		@obuffer << PROMPT
-		@server.pollObj.addMask( @socket, Poll::WRNORM )
+		@server.reactor.enableEvents( @socket, :write )
 	end
 
 
@@ -120,19 +120,19 @@ class User
 
 
 	### Handle poll events on the socket
-	def handlePollEvent( io, evmask )
-		case evmask
+	def handleIOEvent( io, event )
+		case event
 
-		when Poll::ERR|Poll::HUP|Poll::NVAL
+		when :error
 			@server.disconnectUser( self )
 			
-		when Poll::RDNORM
+		when :read
 			input = readInput()
 			@server.processInput( self, *input ) unless input.empty?
 
-		when Poll::WRNORM
+		when :write
 			bytesLeft = writeOutput()
-			@server.pollObj.removeMask( @socket, Poll::WRNORM ) if bytesLeft.zero?
+			@server.reactor.disableEvents( @socket, :write ) if bytesLeft.zero?
 
 		end
 
@@ -164,42 +164,38 @@ end
 class Server
 
 	BANNER = <<-EOF
-	[[ Ruby-Poll Example Chatserver ]]
+	[[ IO::Reactor Example Chatserver ]]
 	Commands: '/quit' to quit, '/shutdown' to shut the server down
 	EOF
 
 	### Instantiate and return a chatserver on the specified host and port
 	def initialize( listenHost="0.0.0.0", listenPort=1138, interval=0.20 )
-		raise "This server requires the POLLRDNORM and POLLWRNORM constants, which " +
-			"don't seem to be defined by your machine's implementation. Sorry. " unless
-			Poll.const_defined?( :RDNORM ) && Poll.const_defined?( :WRNORM )
-
 		@socket			= TCPServer::new( listenHost, listenPort )
 		@users			= []
-		@pollObj		= Poll::new
+		@reactor		= IO::Reactor::new
 		@pollInterval	= interval
 		@shuttingDown	= false
 
-		@pollObj.register @socket, Poll::RDNORM, method(:handlePollEvent)
+		@reactor.register @socket, :read, &method(:handlePollEvent)
 	end
 
 	# Server attributes
-	attr_reader :pollObj, :users, :socket
+	attr_reader :reactor, :users, :socket
 
 
 	### Main server loop
-	def pollLoop
-
+	def eventLoop
 		trap( "INT" ) { shutdown("Server caught SIGINT") }
 		trap( "TERM" ) { shutdown("Server caught SIGTERM") }
 		trap( "HUP" ) { disconnectAllUsers(">>> Server reset <<<") }
 
 		until @shuttingDown
-			eventCount = @pollObj.poll( @pollInterval )
-			$stderr.puts "#{eventCount} poll events..." if eventCount.nonzero?
+			eventCount = @reactor.poll( @pollInterval )
 		end
 
 	rescue StandardError => e
+		$stderr.puts "Error in server: #{e.message}"
+		$stderr.puts "\t" + e.backtrace.join( "\n\t" )
 		shutdown( "Server error: #{e.message}" )
 	rescue SignalException => e
 		shutdown( "Server caught #{e.type.name}" )
@@ -208,23 +204,25 @@ class Server
 		trap( "TERM", "SIG_IGN" )
 		trap( "HUP", "SIG_IGN" )
 
-		$stderr.puts "Server exiting poll loop."
+		$stderr.puts "Server exiting event loop."
 	end
 
 
-	### Handle a poll event specified by <tt>evmask</tt> on the specified
+	### Handle a poll event specified by <tt>event</tt> on the specified
 	### <tt>socket</tt>
-	def handlePollEvent( socket, evmask )
-		case evmask
+	def handlePollEvent( socket, event )
+		$stderr.puts "Got #{event.inspect} event for #{socket.inspect}"
 
-		when Poll::ERR|Poll::HUP|Poll::NVAL
+		case event
+		when :error
+			$stderr.puts "Socket error on the listener socket."
 			shutdown()
 
-		when Poll::RDNORM
+		when :read
 			clSock = socket.accept
 			user = User::new( clSock, self )
 			$stderr.puts "Accepted connection from #{user}"
-			@pollObj.register clSock, Poll::RDNORM, user.method(:handlePollEvent)
+			@reactor.register clSock, :read, &user.method(:handleIOEvent)
 			user.addOutput( BANNER )
 			user.prompt
 			broadcastMsg( "[New connection: #{user}]" )
@@ -293,7 +291,7 @@ class Server
 	### Disconnect the specified user
 	def disconnectUser( user, msg='' )
 		@users -= [ user ]
-		@pollObj.unregister user.socket
+		@reactor.unregister( user.socket )
 		user.disconnect( msg )
 		broadcastMsg( "#{user.to_s} Disconnected." )
 	end
@@ -301,15 +299,19 @@ class Server
 
 	### Disconnect all connected users
 	def disconnectAllUsers( msg )
-		@users.each {|cl| cl.disconnect(msg) }
+		@users.each {|user|
+			@reactor.unregister( user.socket )
+			user.disconnect( msg )
+		}
 		@users.clear
 	end
 
 
 	### Shut the server down
 	def shutdown( msg="Server shutdown" )
+		$stderr.puts "Shutting down: #{msg}"
 		@shuttingDown = true
-		@pollObj.clear
+		@reactor.clear
 		begin
 			@socket.shutdown
 		rescue
@@ -337,6 +339,6 @@ end
 
 srv = Server::new( *ARGV )
 $stderr.puts "Chat server listening on #{srv.socket.addr[2]} port #{srv.socket.addr[1]}"
-srv.pollLoop
+srv.eventLoop
 $stderr.puts "Chat server finished."
 

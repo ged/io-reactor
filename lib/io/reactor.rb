@@ -1,37 +1,39 @@
 #!/usr/bin/ruby
 # 
-# An object-oriented implementation of poll(2) for Ruby
+# An object-oriented multiplexing asynchronous IO mechanism for Ruby.
 # 
 # == Synopsis
 # 
-#	require 'poll'
+#	require 'io/reactor'
 #	require 'socket'
 #	
-#	pollobj = Poll::new
+#	reactorobj = IO::Reactor::new
 #	
 #	sock = TCPServer::new('localhost', 1138)
-#	pollobj.register( sock, Poll::RDNORM ) {|sock,evmask|
-#		case evmask
-#		when Poll::RDNORM
+#	reactorobj.register( sock, :read ) {|sock,event|
+#		case event
+#		when :read
 #			clsock = sock.accept
-#			pollobj.mask( clsock, Poll::RDNORM, clientHandler )
+#			reactorobj.register( clsock, :read, :write ) {|sock,event|
+#				clientHandler( sock, event )
+#			}
 #	
-#		when Poll::HUP|Poll::ERR|Poll::NVAL
-#			pollobj.remove( io )
+#		when :error
+#			reactorobj.remove( io )
 #			$stderr.puts "Server error: Shutting down"
 #	
 #		else
-#			$stderr.puts "Unhandled event: #{evmask}"
+#			$stderr.puts "Unhandled event: #{event}"
 #		end
 #	}
 #	
-#	pollobj.poll( 0.25 ) until poll.handles.empty?
+#	Thread::new { reactorobj.poll( 0 ) until reactorobj.handles.empty? }
 # 
 # == Author
 # 
 # Michael Granger <ged@FaerieMUD.org>
 # 
-# Copyright (c) 2002 The FaerieMUD Consortium. All rights reserved.
+# Copyright (c) 2002, 2003 The FaerieMUD Consortium. All rights reserved.
 # 
 # This module is free software. You may use, modify, and/or redistribute this
 # software under the same terms as Ruby itself.
@@ -42,64 +44,32 @@
 #
 # == Version
 #
-#  $Id: reactor.rb,v 1.10 2002/10/21 03:47:01 deveiant Exp $
+#  $Id: reactor.rb,v 1.11 2003/07/21 06:55:26 deveiant Exp $
 # 
 
 require 'delegate'
-require 'poll.so'
+require 'rbconfig'
 
-### An object-oriented poll() implementation for Ruby
-class Poll
+class IO
 
-	### A Fixnum derivative that does bitwise AND for ===.
-	class EventMask < DelegateClass( Fixnum )
-
-		### Create and return a new Poll::EventMask object with the specified
-		### bitmask (an Integer).
-		def initialize( mask )
-			mask = mask.to_i
-			@mask = mask
-			super( mask )
-		end
-
-		### Returns true if the receiver bitwise ANDed with <tt>otherNum</tt> is
-		### non-zero. This is useful for using bitmasks in case blocks.
-		def ===( otherNum )
-			( self & otherNum ).nonzero?
-		end
-
-		### Returns a new EventMask after ORing the receiver with the specified
-		### value.
-		def |( otherNum )
-			otherNum = otherNum.to_i
-			return EventMask::new( @mask | otherNum )
-		end
-
-		### Returns a new EventMask after ANDing the receiver with the specified
-		### value.
-		def &( otherNum )
-			otherNum = otherNum.to_i
-			return EventMask::new( @mask & otherNum )
-		end
-
-		### Returns a new EventMask after XORing the receiver with the specified
-		### value.
-		def ^( otherNum )
-			otherNum = otherNum.to_i
-			return EventMask::new( @mask ^ otherNum )
-		end
-	end # class Poll::EventMask
-
+### An object-oriented multiplexing asynchronous IO reactor class.
+class Reactor
 
 	### Class constants
-	Version = /([\d\.]+)/.match( %q$Revision: 1.10 $ )[1]
-	Rcsid = %q$Id: reactor.rb,v 1.10 2002/10/21 03:47:01 deveiant Exp $
+	Version = /([\d\.]+)/.match( %q{$Revision: 1.11 $} )[1]
+	Rcsid = %q$Id: reactor.rb,v 1.11 2003/07/21 06:55:26 deveiant Exp $
 
-	### Create and return new poll object.
+	ValidEvents = [:read, :write, :error]
+
+	### Create and return a new IO reactor object.
 	def initialize
-		@masks		= {}
-		@events		= Hash::new( 0 )
-		@callbacks	= {}
+		@handles		= Hash::new {|hsh,key|
+			hsh[ key ] = {
+				:events		=> [],
+				:handler	=> nil,
+			}
+		}
+		@pendingEvents	= Hash::new {|hsh,key| hsh[ key ] = []}
 	end
 
 
@@ -107,251 +77,199 @@ class Poll
 	public
 	######
 
-	### Register the specified IO object with the specified
-	### <tt>eventMask</tt>. If the optional <tt>callback</tt> parameter (a
-	### Method or Proc object) or a <tt>block</tt> is given, it will be called
-	### with <tt>io</tt> and the mask of the event/s whenever #poll generates
-	### any events for <tt>io</tt>. If the <tt>callback</tt> parameter non-nil,
-	### any <tt>block</tt> specified is discarded. Any <tt>arguments</tt>
-	### specified are passed to the callback as the third and succeeding
-	### arguments. The following event masks can be set in the
-	### <tt>eventMask</tt>:
-	### [<tt>Poll::IN</tt>]
-	###   Data other than high-priority data may be read without blocking.
-	### [<tt>Poll::PRI</tt>]
-	###   High-priority data may be received without blocking.
-	### [<tt>Poll::OUT</tt>]
-	###   Normal data (priority band equals 0) may be written without blocking.
+	# The Hash of handles (instances of IO or its subclasses) associated with
+	# the reactor. The keys are the IO objects, and the values are a Hash of
+	# event/s => handler.
+	attr_reader :handles
+
+	# The Hash of events which occurred in the last event loop, keyed by handle.
+	attr_reader :pendingEvents
+
+
+	### Register the specified IO object with the reactor for the given
+	### <tt>events</tt>. The reactor will test the given <tt>io</tt> for the
+	### events specified whenever #poll is called. See the #poll method for a
+	### list of valid events. If no <tt>events</tt> are specified, only
+	### <tt>:error</tt> events will be polled for.
 	###
-	### The following masks are ignored in the <tt>eventMask</tt>, as they are
-	### always implicitly set, but they may be specified in the handler
-	### <tt>callback</tt> or <tt>block</tt> to trap the conditions they
-	### represent:
-	### [<tt>Poll::ERR</tt>]
-	###   An error has occurred on the device.
-	### [<tt>Poll::HUP</tt>]
-	###   The device has been disconnected. This event and Poll::OUT are
-	###   mutually exclusive; a device can never be writable once a hangup has
-	###   occurred. However, this event and Poll::IN, Poll::RDNORM,
-	###   Poll::RDBAND, or Poll::PRI are not mutually exclusive.
-	### [<tt>Poll::NVAL</tt>]
-	###   The <tt>io</tt> object specified is invalid -- it has been closed, has
-	###   a bad file descriptor, etc.
+	### If a <tt>handler</tt> is specified, it will be called whenever the
+	### <tt>io</tt> has any of the specified <tt>events</tt> occur to it. It
+	### should take two parameters: the <tt>io</tt> and the <tt>event</tt>.
 	###
-	### If your operating system defines them, these masks are also available:
-	### [<tt>Poll::RDNORM</tt>]
-	###   Normal data (priority band equals 0) may be read without blocking.
-	### [<tt>Poll::RDBAND</tt>]
-	###   Data from a non-zero priority band may be read without blocking.
-	### [<tt>Poll::WRNORM</tt>]
-	###   Same as Poll::OUT.
-	### [<tt>Poll::WRBAND</tt>]
-	###   Priority data (priority band greater than 0) may be written.
-	def register( io, eventMask, callback=nil, *arguments, &block )
-		raise TypeError, "#{io.class.name} does not appear to be file-descriptor-based" unless
-			io.respond_to?( :fileno ) && io.fileno
+	### Registering a handle will unregister any previously registered
+	### event/handler pairs associated with the handle.
+	def register( io, *events, &handler )
+		self.unregister( io )
+		self.enableEvents( io, *events )
+		self.setHandler( io, &handler ) if handler
 
-		# Clear any old events for this handle
-		@events.delete( io )
-
-		# Set the mask
-		@masks[ io ] = 0
-		setMask( io, eventMask )
-
-		# Set the callback
-		setCallback( io, (callback||block), *arguments )
+		return self
 	end
-	alias :add :register
+	alias_method :add, :register
+
+
+	### Add the specified +events+ to the list that will be polled for on the
+	### given +io+ handle.
+	def enableEvents( io, *events )
+		@handles[ io ][:events] |= events
+	end
+
+
+	### Remove the specified +events+ from the list that will be polled for on
+	### the given +io+ handle.
+	def disableEvents( io, *events )
+		raise RuntimeError, "Cannot disable the :error event" if
+			events.include?( :error )
+		@handles[ io ][:events] -= events
+	end
+
+
+	### Set the handler for events on the given +io+ handle to the specified
+	### +handler+. Returns the previously-registered handler, if any.
+	def setHandler( io, &handler )
+		rval = @handles[ io ][:handler]
+		@handles[ io ][:handler] = handler
+		return rval
+	end
+
+
+	### Remove and return the handler for events on the given +io+ handle.
+	def removeHandler( io )
+		rval = @handles[ io ][:handler]
+		@handles[ io ][:handler] = nil
+		return rval
+	end
 
 
 	### Remove the specified <tt>io</tt> from the receiver's list of registered
 	### handles, if present. Returns the handle if it was registered, or
 	### <tt>nil</tt> if it was not.
 	def unregister( io )
-		@events.delete( io )
-		@callbacks.delete( io )
-		@masks.delete( io )
+		@pendingEvents.delete( io )
+		@handles.delete( io )
 	end
-	alias :remove :unregister
+	alias_method :remove, :unregister
 
 
 	### Returns true if the specified <tt>io</tt> is registered with the poll
 	### object.
 	def registered?( io )
-		return @masks.has_key?( io )
+		return @handles.has_key?( io )
 	end
 
 
 	### Clear all registered handles from the poll object. Returns the handles
 	### that were cleared.
 	def clear
-		rv = @masks.keys
+		rv = @handles.keys
 
-		@events.clear
-		@callbacks.clear
-		@masks.clear
+		@pendingEvents.clear
+		@handles.clear
 
 		return rv
 	end
+
 
 	
-	### Get the EventMask for the specified <tt>io</tt>.
-	def mask( io )
-		raise ArgumentError, "Handle #{io.inspect} is not registered" unless
-			@masks.has_key?( io )
-
-		return @masks[ io ]
-	end
-
-
-	### Set the EventMask for the specified <tt>io</tt> to the given
-	### <tt>eventMask</tt>.
-	def setMask( io, eventMask )
-		raise ArgumentError, "Handle #{io.inspect} is not registered" unless
-			@masks.has_key?( io )
-
-		return @masks[ io ] = EventMask::new( eventMask.to_i )
-	end
-
-
-	### Add (bitwise OR) the specified <tt>eventMask</tt> to the mask for the
-	### specified <tt>io</tt>. Returns the new mask.
-	def addMask( io, eventMask )
-		raise ArgumentError, "Handle #{io.inspect} is not registered" unless
-			@masks.has_key?( io )
-
-		@masks[ io ] |= eventMask.to_i
-	end
-
-
-	### Remove (bitwise XOR) the specified <tt>eventMask</tt> from the mask for
-	### the specified <tt>io</tt>. Returns the new mask.
-	def removeMask( io, eventMask )
-		raise ArgumentError, "Handle #{io.inspect} is not registered" unless
-			@masks.has_key?( io )
-
-		@masks[ io ] ^= eventMask.to_i
-	end
-
-
-	### Returns <tt>true</tt> if the specified <tt>io</tt> has a callback
-	### associated with it.
-	def hasCallback?( io )
-		@callbacks.has_key?( io )
-	end
-	alias :has_callback? :hasCallback?
-
-
-	### Returns the per-handle callback associated with the specified
-	### <tt>io</tt>. If no callback exists for the given <tt>io</tt>,
-	### <tt>nil</tt> is returned.
-	def callback( io )
-		return nil unless @callbacks.has_key? io
-		return @callbacks[io][:callback]
-	end
-
-
-	### Returns the per-handle callback arguments associated with the specified
-	### <tt>io</tt> as an Array. If no callback exists for the given
-	### <tt>io</tt>, <tt>nil</tt> is returned.
-	def args( io )
-		return nil unless @callbacks.has_key? io
-		return @callbacks[io][:args]
-	end
-
-
-	### Reset the per-handle callback associated with the specified <tt>io</tt>
-	### to the specified <tt>callback</tt> (a Proc or Method object) or
-	### <tt>block</tt>, if given, or to nil if not specified. Any arguments
-	### specified past the second will be passed to the callback as its
-	### arguments. Returns the old callback.
-	def setCallback( io, callback=nil, *args, &block )
-		raise ArgumentError, "Handle #{io.inspect} is not registered" unless
-			@masks.has_key?( io )
-
-		rv = nil
-		if @callbacks.has_key?( io )
-			rv = @callbacks[ io ][:callback]
-		end
-
-		if callback || block
-			@callbacks[ io ] = { :callback => (callback || block), :args => args }
-		else
-			@callbacks.delete( io )
-		end
-
-		return rv
-	end
-
-
-	### Call the system-level poll function with the handles registered to the
-	### receiver. Any callbacks specified when the handles were registered are
-	### run for those handles with events. If a block is given, it will be
-	### invoked once for each handle which doesn't have an explicit handler. The
-	### <tt>timeout</tt> argument is the number of floating-point seconds to
-	### wait for an event before returning; negative timeout values will cause
-	### #poll to block until there is at least one event to report. This method
-	### returns the number of handles on which one or more events occurred.
+	### Poll the handles registered to the reactor for pending events. The
+	### following event types are defined:
+	###
+	### [<tt>:read</tt>]
+	###   Data may be read from the handle without blocking.
+	### [<tt>:write</tt>]
+	###   Data may be written to the handle without blocking.
+	### [<tt>:error</tt>]
+	###   An error has occurred on the handle. This event type is always
+	###   enabled, regardless of whether or not it is passed as one of the
+	###   <tt>events</tt>.
+	###
+	### Any handlers specified when the handles were registered are run for
+	### those handles with events. If a block is given, it will be invoked once
+	### for each handle which doesn't have an explicit handler. If no block is
+	### given, events without explicit handlers are inserted into the reactor's
+	### #pendingEvents.
+	###
+	### The <tt>timeout</tt> argument is the number of floating-point seconds to
+	### wait for an event before returning (ie., fourth argument to the
+	### underlying <tt>select()</tt> call); negative timeout values will cause
+	### #poll to block until there is at least one event to report.
+	###
+	### This method returns the number of handles on which one or more events
+	### occurred.
 	def poll( timeout=-1 ) # :yields: io, eventMask
-		raise TypeError, "Timeout must be Numeric, not a #{timeout.type.name}" unless
-			timeout.kind_of? Numeric
 		timeout = timeout.to_f
+		@pendingEvents.clear
+		count = 0
 
-		@events.clear
+		unless @handles.empty?
+			timeout = nil if timeout < 0
+			eventedHandles = self.getPendingEvents( timeout )
 
-		unless @masks.empty?
-			@events = _poll( @masks.to_a, timeout*1000 )
-
-			# For each io that had an event happen, call any callback associated
-			# with it, or failing that, any provided block
-			@events.each {|io,evmask|
-				if @callbacks.has_key?( io )
-					args = @callbacks[ io ][ :args ]
-					@callbacks[ io ][ :callback ].call( io,
-													    EventMask::new(evmask),
-													    *args )
-				elsif block_given?
-					yield( io, EventMask::new(evmask) )
-				end
+			# For each event of each io that had an event happen, call any
+			# associated callback, or any provided block, or failing both of
+			# those, add the event to the hash of unhandled pending events.
+			eventedHandles.each {|io,events|
+				count += 1
+				events.each {|ev|
+					if @handles[ io ][:handler]
+						@handles[ io ][:handler].call( io, ev )
+					elsif block_given?
+						yield( io, ev )
+					else
+						$stderr.puts "Pending events hash is: #{@pendingEvents.inspect}"
+						@pendingEvents[io].push( ev )
+					end
+				}
 			}
 		end
 
-		@events.default = EventMask::new( 0 )
-		return @events.length
+		return count
 	end
 
 
-	### Fetch an Array of handles which had the events specified by
-	### <tt>eventMask</tt> happen to them in the last call to #poll. If
-	### <tt>eventMask</tt> is <tt>nil</tt>, an Array of all handles
-	### with pending events is returned.
-	def events( eventMask=nil )
-		if eventMask
-			eventMask = eventMask.to_i
-			@events.find_all {|io,evmask| (evmask & eventMask).nonzero? }.collect {|io,evmask| io}
-		else
-			@events.keys
-		end
+	### Returns <tt>true</tt> if no handles are associated with the receiver.
+	def empty?
+		@handles.empty?
 	end
 
 
-	### Fetch an Array of handles that are masked to receive the specified
-	### <tt>eventMask</tt>. If <tt>eventMask</tt> is nil, an Array of all
-	### registered handles is returned.
-	def handles( eventMask=nil )
-		if eventMask
-			eventMask = eventMask.to_i
-			@masks.find_all {|io,evmask| (evmask & eventMask).nonzero? }.collect {|io,evmask| io}
-		else
-			@masks.keys
-		end
+	#########
+	protected
+	#########
+
+	### Select on the registered handles, returning a Hash of handles => events
+	### for handles which had events occur.
+	def getPendingEvents( timeout )
+		eventHandles = IO::select( self.getReadHandles, self.getWriteHandles,
+			@handles.keys, timeout ) or return {}
+		eventHash = Hash::new {|hsh,io| hsh[io] = []}
+
+		# Fill in the hash with pending events of each type
+		[:read, :write, :error].each_with_index {|event,i|
+			eventHandles[i].each {|io| eventHash[io].push( event )}
+		}
+		return eventHash
 	end
 
 
-	### Return a human-readable string describing the poll object.
-	def inspect
-		"<Poll: handles: %s, %d pending events>" % [@masks.inspect, @events.length]
+	### Return an Array of handles which have handlers for the <tt>:read</tt>
+	### event.
+	def getReadHandles
+		@handles.
+			find_all {|io,hsh| hsh[:events].include?( :read )}.
+			collect {|io,hsh| io}
 	end
 
-end # class Poll
+
+	### Return an Array of handles which have handlers for the <tt>:write</tt>
+	### event.
+	def getWriteHandles
+		@handles.
+			find_all {|io,hsh| hsh[:events].include?( :write )}.
+			collect {|io,hsh| io}
+	end
+
+
+end # class Reactor
+end # class IO
 
