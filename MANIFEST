@@ -1,8 +1,6 @@
 README
-docs/makedocs.rb
-docs/lib/**/*
-docs/stylesheets
-examples/*
+makedocs.rb
+examples/chatserver.rb
 extconf.rb
 lib/poll.rb
 poll.c
