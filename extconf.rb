@@ -2,7 +2,7 @@
 #
 #	extconf.rb - Extension config script for the Ruby IO::Poll class
 #
-#	See the INSTALL file for instructions on how to use this script.
+#	See the README file for instructions on how to use this script.
 #
 #	Author: Michael Granger (with lots of code borrowed from the bdb Ruby
 #				extension's extconf.rb)
