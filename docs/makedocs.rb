@@ -1,9 +1,9 @@
 #!/usr/bin/ruby
 #
 #	RDoc Documentation Generation Script
-#	$Id: makedocs.rb,v 1.1 2003/08/04 23:51:44 deveiant Exp $
+#	$Id$
 #
-#	Copyright (c) 2001-2003 The FaerieMUD Consortium.
+#	Copyright (c) 2001-2004 The FaerieMUD Consortium.
 #
 #	This is free software. You may use, modify, and/or redistribute this
 #	software under the terms of the Perl Artistic License. (See
@@ -25,7 +25,7 @@ require 'rdoc/rdoc'
 require 'utils'
 include UtilityFunctions
 
-def makeDocs( docsdir, template='css2', diagrams=false, upload=nil, ridocs=false )
+def makeDocs( docsdir, template='html', diagrams=false, upload=nil, ridocs=false )
 	debugMsg "docsdir = %p, template = %p, diagrams = %p, upload = %p, ridocs = %p" %
 		[docsdir, template, diagrams, upload, ridocs]
 
@@ -155,7 +155,7 @@ if $0 == __FILE__
 	verbose = false
 	upload = nil
 	diagrams = false
-	template = 'css2'
+	template = 'html'
 	docsdir = "docs/html"
 	rimode = false
 	
