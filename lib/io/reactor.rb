@@ -53,7 +53,7 @@
 #
 # == Version
 #
-#  $Id: reactor.rb,v 1.13 2003/08/04 23:56:14 deveiant Exp $
+#  $Id: reactor.rb,v 1.14 2003/12/13 22:11:42 deveiant Exp $
 # 
 
 require 'delegate'
@@ -65,8 +65,8 @@ class IO
 class Reactor
 
 	### Class constants
-	Version = /([\d\.]+)/.match( %q{$Revision: 1.13 $} )[1]
-	Rcsid = %q$Id: reactor.rb,v 1.13 2003/08/04 23:56:14 deveiant Exp $
+	Version = /([\d\.]+)/.match( %q{$Revision: 1.14 $} )[1]
+	Rcsid = %q$Id: reactor.rb,v 1.14 2003/12/13 22:11:42 deveiant Exp $
 
 	ValidEvents = [:read, :write, :error]
 
@@ -130,6 +130,12 @@ class Reactor
 	alias_method :add, :register
 
 
+	### Returns +true+ if the given +io+ handle is registered with the reactor.
+	def registered?( io )
+		return @handles.key?( io )
+	end
+
+
 	### Add the specified +events+ to the list that will be polled for on the
 	### given +io+ handle.
 	def enableEvents( io, *events )
@@ -190,13 +196,6 @@ class Reactor
 		@handles.delete( io )
 	end
 	alias_method :remove, :unregister
-
-
-	### Returns true if the specified <tt>io</tt> is registered with the poll
-	### object.
-	def registered?( io )
-		return @handles.has_key?( io )
-	end
 
 
 	### Clear all registered handles from the poll object. Returns the handles
