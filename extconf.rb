@@ -85,10 +85,13 @@ $CFLAGS << ' -Wall '
 dir_config( "poll" )
 
 # Make sure we have the ODE library and header available
-have_library_no_append( "c", "poll" ) or
-	abort( "Your libc apparently doesn't have a poll()." )
-have_header( "poll.h" ) || have_header( "sys/poll.h" ) or
-	abort( "Can't find a suitable poll.h." )
+if enable_config("fakepoll") || !have_library_no_append( "c", "poll" )
+	puts "Using rb_thread_select() instead of native poll()."
+	$defs << "-DUSE_FAKE_POLL"
+else
+	have_header( "poll.h" ) || have_header( "sys/poll.h" ) or
+		abort( "Can't find a suitable poll.h." )
+end
 have_header( "limits.h" )
 
 # Write the Makefile
