@@ -1,9 +1,7 @@
 README
 makedocs.rb
 examples/chatserver.rb
-extconf.rb
-lib/poll.rb
-poll.c
+lib/io/reactor.rb
 test.rb
 makedocs.rb
 utils.rb

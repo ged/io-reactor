@@ -1,5 +1,4 @@
-lib/*
-poll.c
+lib/io/*
 README
 ChangeLog
 examples/*
