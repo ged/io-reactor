@@ -1,6 +1,6 @@
 /*
  *		poll.c - A poll() implementation for Ruby
- *		$Id: poll.c,v 1.1 2002/04/16 10:47:22 deveiant Exp $
+ *		$Id: poll.c,v 1.2 2002/04/17 12:47:29 deveiant Exp $
  *
  *		Author: Michael Granger <ged@FaerieMUD.org>
  *		Copyright (c) 2002 The FaerieMUD Consortium. All rights reserved.
@@ -13,6 +13,8 @@
  *		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  *
  */
+
+#define _GNU_SOURCE
 
 #include <ruby.h>
 #include <rubyio.h>
@@ -138,34 +140,50 @@ Init_poll( void )
 
   // Constants
   rb_define_const( poll_cPoll, "POLLIN",		INT2NUM(POLLIN) );
+  rb_define_const( poll_cPoll, "IN",			INT2NUM(POLLIN) );
+
   rb_define_const( poll_cPoll, "POLLPRI",		INT2NUM(POLLPRI) );
+  rb_define_const( poll_cPoll, "PRI",			INT2NUM(POLLPRI) );
+
   rb_define_const( poll_cPoll, "POLLOUT",		INT2NUM(POLLOUT) );
+  rb_define_const( poll_cPoll, "OUT",			INT2NUM(POLLOUT) );
+
   rb_define_const( poll_cPoll, "POLLERR",		INT2NUM(POLLERR) );
+  rb_define_const( poll_cPoll, "ERR",			INT2NUM(POLLERR) );
+
   rb_define_const( poll_cPoll, "POLLHUP",		INT2NUM(POLLHUP) );
+  rb_define_const( poll_cPoll, "HUP",			INT2NUM(POLLHUP) );
+
   rb_define_const( poll_cPoll, "POLLNVAL",		INT2NUM(POLLNVAL) );
+  rb_define_const( poll_cPoll, "NVAL",			INT2NUM(POLLNVAL) );
 
 #ifdef POLLRDNORM
   rb_define_const( poll_cPoll, "POLLRDNORM",	INT2NUM(POLLRDNORM) );
+  rb_define_const( poll_cPoll, "RDNORM",		INT2NUM(POLLRDNORM) );
 #endif
 
 #ifdef POLLRDBAND
   rb_define_const( poll_cPoll, "POLLRDBAND",	INT2NUM(POLLRDBAND) );
+  rb_define_const( poll_cPoll, "RDBAND",		INT2NUM(POLLRDBAND) );
 #endif
 
 #ifdef POLLWRNORM
   rb_define_const( poll_cPoll, "POLLWRNORM",	INT2NUM(POLLWRNORM) );
+  rb_define_const( poll_cPoll, "WRNORM",		INT2NUM(POLLWRNORM) );
 #endif
 
 #ifdef POLLWRBAND
   rb_define_const( poll_cPoll, "POLLWRBAND",	INT2NUM(POLLWRBAND) );
+  rb_define_const( poll_cPoll, "WRBAND",		INT2NUM(POLLWRBAND) );
 #endif
 
 #ifdef POLLMSG
   rb_define_const( poll_cPoll, "POLLMSG",		INT2NUM(POLLMSG) );
+  rb_define_const( poll_cPoll, "MSG",			INT2NUM(POLLMSG) );
 #endif
 
   // Methods
-  rb_define_method( poll_cPoll, "_poll", _poll, 2 );
+  rb_define_protected_method( poll_cPoll, "_poll", _poll, 2 );
 
   // Load the Ruby front end
   rb_require( "poll.rb" );
