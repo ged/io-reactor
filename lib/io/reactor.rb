@@ -42,7 +42,7 @@
 #
 # == Version
 #
-#  $Id: reactor.rb,v 1.8 2002/07/19 16:29:20 deveiant Exp $
+#  $Id: reactor.rb,v 1.9 2002/07/20 16:07:01 deveiant Exp $
 # 
 
 require 'delegate'
@@ -92,8 +92,8 @@ class Poll
 
 
 	### Class constants
-	Version = /([\d\.]+)/.match( %q$Revision: 1.8 $ )[1]
-	Rcsid = %q$Id: reactor.rb,v 1.8 2002/07/19 16:29:20 deveiant Exp $
+	Version = /([\d\.]+)/.match( %q$Revision: 1.9 $ )[1]
+	Rcsid = %q$Id: reactor.rb,v 1.9 2002/07/20 16:07:01 deveiant Exp $
 
 	### Create and return new poll object.
 	def initialize
@@ -111,10 +111,11 @@ class Poll
 	### <tt>eventMask</tt>. If the optional <tt>callback</tt> parameter (a
 	### Method or Proc object) or a <tt>block</tt> is given, it will be called
 	### with <tt>io</tt> and the mask of the event/s whenever #poll generates
-	### any events for <tt>io</tt>. If the <tt>callback</tt> parameter is given,
-	### the <tt>block</tt> is ignored. Any <tt>arguments</tt> specified are
-	### passed to the callback as the third and succeeding arguments. The
-	### following event masks can be set in the <tt>eventMask</tt>:
+	### any events for <tt>io</tt>. If the <tt>callback</tt> parameter non-nil,
+	### any <tt>block</tt> specified is discarded. Any <tt>arguments</tt>
+	### specified are passed to the callback as the third and succeeding
+	### arguments. The following event masks can be set in the
+	### <tt>eventMask</tt>:
 	### [<tt>Poll::IN</tt>]
 	###   Data other than high-priority data may be read without blocking.
 	### [<tt>Poll::PRI</tt>]
@@ -147,23 +148,20 @@ class Poll
 	### [<tt>Poll::WRBAND</tt>]
 	###   Priority data (priority band greater than 0) may be written.
 	def register( io, eventMask, callback=nil, *arguments, &block )
-		
 		raise TypeError, "No implicit conversion to IO from #{io.type.name}" unless
 			io.kind_of? IO
+		raise TypeError, "#{io.type.name} does not appear to be file-descriptor-based" unless
+			io.respond_to?( :fileno ) && io.fileno
 
 		# Clear any old events for this handle
 		@events.delete( io )
 
-		# Set the callback, if given, else just make sure its clear
-		if callback || block
-			@callbacks[ io ] = { :callback => (callback || block), :args => arguments }
-		else
-			@callbacks.delete( io )
-		end
-
 		# Set the mask
-		eventMask = eventMask.to_i
-		@masks[ io ] = EventMask::new( eventMask )
+		@masks[ io ] = 0
+		setMask( io, eventMask )
+
+		# Set the callback
+		setCallback( io, (callback||block), *arguments )
 	end
 	alias :add :register
 
@@ -208,6 +206,16 @@ class Poll
 	end
 
 
+	### Set the EventMask for the specified <tt>io</tt> to the given
+	### <tt>eventMask</tt>.
+	def setMask( io, eventMask )
+		raise ArgumentError, "Handle #{io.inspect} is not registered" unless
+			@masks.has_key?( io )
+
+		return @masks[ io ] = EventMask::new( eventMask.to_i )
+	end
+
+
 	### Add (bitwise OR) the specified <tt>eventMask</tt> to the mask for the
 	### specified <tt>io</tt>. Returns the new mask.
 	def addMask( io, eventMask )
@@ -236,20 +244,42 @@ class Poll
 	alias :has_callback? :hasCallback?
 
 
+	### Returns the per-handle callback associated with the specified
+	### <tt>io</tt>. If no callback exists for the given <tt>io</tt>,
+	### <tt>nil</tt> is returned.
+	def callback( io )
+		return nil unless @callbacks.has_key? io
+		return @callbacks[io][:callback]
+	end
+
+
+	### Returns the per-handle callback arguments associated with the specified
+	### <tt>io</tt> as an Array. If no callback exists for the given
+	### <tt>io</tt>, <tt>nil</tt> is returned.
+	def args( io )
+		return nil unless @callbacks.has_key? io
+		return @callbacks[io][:args]
+	end
+
+
 	### Reset the per-handle callback associated with the specified <tt>io</tt>
 	### to the specified <tt>callback</tt> (a Proc or Method object) or
-	### <tt>block</tt>, if given, or to nil if not specified. Returns the old
-	### callback.
-	def setCallback( io, callback=nil, &block )
+	### <tt>block</tt>, if given, or to nil if not specified. Any arguments
+	### specified past the second will be passed to the callback as its
+	### arguments. Returns the old callback.
+	def setCallback( io, callback=nil, *args, &block )
 		raise ArgumentError, "Handle #{io.inspect} is not registered" unless
 			@masks.has_key?( io )
 
-		rv = @callback[ io ]
+		rv = nil
+		if @callbacks.has_key?( io )
+			rv = @callbacks[ io ][:callback]
+		end
 
 		if callback || block
-			@callback[ io ] = callback || block
+			@callbacks[ io ] = { :callback => (callback || block), :args => args }
 		else
-			@callback.delete( io )
+			@callbacks.delete( io )
 		end
 
 		return rv
