@@ -42,7 +42,7 @@
 #
 # == Version
 #
-#  $Id: poll.rb,v 1.7 2002/07/19 03:52:47 deveiant Exp $
+#  $Id: poll.rb,v 1.8 2002/07/19 16:29:20 deveiant Exp $
 # 
 
 require 'delegate'
@@ -92,8 +92,8 @@ class Poll
 
 
 	### Class constants
-	Version = /([\d\.]+)/.match( %q$Revision: 1.7 $ )[1]
-	Rcsid = %q$Id: poll.rb,v 1.7 2002/07/19 03:52:47 deveiant Exp $
+	Version = /([\d\.]+)/.match( %q$Revision: 1.8 $ )[1]
+	Rcsid = %q$Id: poll.rb,v 1.8 2002/07/19 16:29:20 deveiant Exp $
 
 	### Create and return new poll object.
 	def initialize
@@ -208,7 +208,7 @@ class Poll
 	end
 
 
-	### Add (butwise OR) the specified <tt>eventMask</tt> to the mask for the
+	### Add (bitwise OR) the specified <tt>eventMask</tt> to the mask for the
 	### specified <tt>io</tt>. Returns the new mask.
 	def addMask( io, eventMask )
 		raise ArgumentError, "Handle #{io.inspect} is not registered" unless
