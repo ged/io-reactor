@@ -42,7 +42,7 @@
 #
 # == Version
 #
-#  $Id: poll.rb,v 1.2 2002/04/17 12:48:17 deveiant Exp $
+#  $Id: poll.rb,v 1.3 2002/04/17 13:03:45 deveiant Exp $
 # 
 
 require 'delegate'
@@ -68,21 +68,21 @@ class Poll
 			( self & otherNum ).nonzero?
 		end
 
-		### Returns a new EventMask aftering ORing the reciever with the
+		### Returns a new EventMask aftering ORing the receiver with the
 		### specified value.
 		def |( otherNum )
 			otherNum = otherNum.to_i
 			return EventMask::new( @mask | otherNum )
 		end
 
-		### Returns a new EventMask aftering ORing the reciever with the
+		### Returns a new EventMask aftering ANDing the receiver with the
 		### specified value.
 		def &( otherNum )
 			otherNum = otherNum.to_i
 			return EventMask::new( @mask & otherNum )
 		end
 
-		### Returns a new EventMask aftering ORing the reciever with the
+		### Returns a new EventMask aftering XORing the receiver with the
 		### specified value.
 		def ^( otherNum )
 			otherNum = otherNum.to_i
@@ -92,8 +92,8 @@ class Poll
 
 
 	### Class constants
-	Version = /([\d\.]+)/.match( %q$Revision: 1.2 $ )[1]
-	Rcsid = %q$Id: poll.rb,v 1.2 2002/04/17 12:48:17 deveiant Exp $
+	Version = /([\d\.]+)/.match( %q$Revision: 1.3 $ )[1]
+	Rcsid = %q$Id: poll.rb,v 1.3 2002/04/17 13:03:45 deveiant Exp $
 
 	### Create and return new poll object.
 	def initialize
