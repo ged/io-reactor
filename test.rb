@@ -18,7 +18,7 @@
 #
 # == Version
 #
-#  $Id: test.rb,v 1.8 2003/08/04 23:57:07 deveiant Exp $
+#  $Id: test.rb,v 1.9 2003/08/07 02:19:38 deveiant Exp $
 # 
 #
 
@@ -41,7 +41,7 @@ class IOReactorTestCase < Test::Unit::TestCase
 	def setup
 		@reactor = IO::Reactor::new
 		@tmpfile = File::open( TMPFILE, "w" )
-		File::unlink TMPFILE
+		File::unlink TMPFILE unless File::ALT_SEPARATOR
 		@sock = TCPServer::new( HOST, PORT )
 	end
 	alias_method :set_up, :setup
@@ -51,6 +51,7 @@ class IOReactorTestCase < Test::Unit::TestCase
 		@reactor = nil
 		@tmpfile.close
 		@sock.close
+		File::unlink( TMPFILE ) if File::exists?( TMPFILE )
 	end
 	alias_method :tear_down, :teardown
 
