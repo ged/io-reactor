@@ -1,0 +1,11 @@
+README
+docs/makedocs.rb
+docs/lib/**/*
+docs/stylesheets
+extconf.rb
+lib/poll.rb
+ext/poll.c
+test.rb
+utils.rb
+ChangeLog
+
