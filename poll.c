@@ -1,6 +1,6 @@
 /*
  *		poll.c - A poll() implementation for Ruby
- *		$Id: poll.c,v 1.4 2002/09/06 16:52:32 deveiant Exp $
+ *		$Id: poll.c,v 1.5 2003/04/21 04:34:59 deveiant Exp $
  *
  *		Author: Michael Granger <ged@FaerieMUD.org>
  *		Copyright (c) 2002 The FaerieMUD Consortium. All rights reserved.
@@ -14,12 +14,33 @@
  *
  */
 
-#define _GNU_SOURCE
-
 #include <ruby.h>
+#include <intern.h>
 #include <rubyio.h>
 #include <rubysig.h>
+
+#ifndef USE_FAKE_POLL
+#define _GNU_SOURCE
 #include <poll.h>
+#else
+struct pollfd {
+	int fd;
+	short events;
+	short revents;
+};
+
+#define POLLIN   0x0001
+#define POLLPRI  0x0002
+#define POLLOUT  0x0004
+#define POLLERR  0x0008
+#define POLLHUP  0x0010
+#define POLLNVAL 0x0020
+
+/* #include <sys/time.h> */
+/* #include <sys/types.h> */
+/* #include <unistd.h> */
+/* #include <string.h> */
+#endif /* USE_FAKE_POLL */
 
 
 /* -------------------------------------------------------
@@ -62,8 +83,66 @@ poll_debug(fmt, va_alist)
 
 
 /* -------------------------------------------------------
- * Backend function
+ * Backend functions
  * ------------------------------------------------------- */
+
+/* 
+ * If poll(2) doesn't exist or it isn't used to keep compatibility with Ruby's
+ * threads, fake poll() using rb_thead_select(). Based on code for Freehaven by
+ * Nick Mathewson <nickm@freehaven.net>.
+ */
+#ifdef USE_FAKE_POLL
+static int
+poll( fds, fdCount, timeout )
+	struct pollfd *fds;
+	unsigned int fdCount;
+	int timeout;
+{
+	int idx, maxfd, fd, r;
+	fd_set readfds, writefds, exceptfds;
+	struct timeval _timeout;
+	_timeout.tv_sec = timeout/1000;
+	_timeout.tv_usec = ( timeout % 1000 ) * 1000;
+	
+	FD_ZERO( &readfds );
+	FD_ZERO( &writefds );
+	FD_ZERO( &exceptfds );
+
+	maxfd = -1;
+	for ( idx = 0; idx < fdCount; ++idx ) {
+		fd = fds[idx].fd;
+
+		if (fd > maxfd && fds[idx].events)
+			maxfd = fd;
+		if (fds[idx].events & (POLLIN))
+			FD_SET(fd, &readfds);
+		if (fds[idx].events & POLLOUT)
+			FD_SET(fd, &writefds);
+		if (fds[idx].events & (POLLERR))
+			FD_SET(fd, &exceptfds);
+	}
+
+	r = rb_thread_select(maxfd+1, &readfds, &writefds, &exceptfds, 
+		   timeout == -1 ? NULL : &_timeout);
+	if (r <= 0)
+		return r;
+
+	r = 0;
+	for (idx = 0; idx < fdCount; ++idx) {
+		fd = fds[idx].fd;
+		fds[idx].revents = 0;
+		if (FD_ISSET(fd, &readfds))
+			fds[idx].revents |= POLLIN;
+		if (FD_ISSET(fd, &writefds))
+			fds[idx].revents |= POLLOUT;
+		if (FD_ISSET(fd, &exceptfds))
+			fds[idx].revents |= POLLERR;
+		if (fds[idx].revents)
+			++r;
+	}
+	return r;
+}
+#endif
 
 
 /**
@@ -74,11 +153,10 @@ poll_debug(fmt, va_alist)
  * milliseconds) specified. Returns a Hash with key-value pairs of the handles
  * which had events and the event mask which occurred to it.
  */
-VALUE
-_poll( self, handleArray, timeoutArg )
+static VALUE
+rb_poll( self, handleArray, timeoutArg )
 	 VALUE self, handleArray, timeoutArg;
 {
-#ifdef HAVE_POLL_H
 	unsigned long fdCount;
 	int timeout;
 	struct pollfd *fds;
@@ -154,10 +232,6 @@ _poll( self, handleArray, timeoutArg )
 	}
 
 	return evHash;
-
-#else
-	rb_notimplement();
-#endif // HAVE_POLL_H
 }
 
 
@@ -189,8 +263,8 @@ Init_poll( void )
 	rb_define_const( poll_cPoll, "POLLHUP",		INT2NUM(POLLHUP) );
 	rb_define_const( poll_cPoll, "HUP",			INT2NUM(POLLHUP) );
 
-	rb_define_const( poll_cPoll, "POLLNVAL",		INT2NUM(POLLNVAL) );
-	rb_define_const( poll_cPoll, "NVAL",			INT2NUM(POLLNVAL) );
+	rb_define_const( poll_cPoll, "POLLNVAL",	INT2NUM(POLLNVAL) );
+	rb_define_const( poll_cPoll, "NVAL",		INT2NUM(POLLNVAL) );
 
 #ifdef POLLRDNORM
 	rb_define_const( poll_cPoll, "POLLRDNORM",	INT2NUM(POLLRDNORM) );
@@ -218,7 +292,7 @@ Init_poll( void )
 #endif
 
 	// Methods
-	rb_define_protected_method( poll_cPoll, "_poll", _poll, 2 );
+	rb_define_protected_method( poll_cPoll, "_poll", rb_poll, 2 );
 
 	// Load the Ruby front end
 	rb_require( "poll.rb" );
