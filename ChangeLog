@@ -1,303 +1,386 @@
-2003-07-21 09:04  Michael Granger <ged@FaerieMUD.org>
+2004-11-16 03:34  ged
 
-	* README (1.5, RELEASE_0_04):
+	* .: -- Updated project-version prop to 0.0.6
 
-	- Changed to IO::Reactor.
-	
-2003-07-21 08:21  Michael Granger <ged@FaerieMUD.org>
+2004-11-16 03:31  ged
 
-	* install.rb (1.1, RELEASE_0_04):
+	* .: -- Added project metadata properties to base dir.
 
-	Initial checkin.
-	
-2003-07-21 00:55  Michael Granger <ged@FaerieMUD.org>
+2004-11-16 03:29  ged
 
-	* test.rb (1.7), utils.rb (1.4), examples/chatserver.rb (1.3),
-	lib/io/reactor.rb (1.11), CATALOG (1.2) (utags: RELEASE_0_04):
+	* makedist.rb, makedocs.rb, makesitedocs.rb, utils.rb: -- Updated
+	  dist scripts from project-utils.
+	  -- Removed unneeded docs-generation scripts.
 
-	- Refactored into IO::Reactor from Ruby-Poll.
-	
-2003-07-21 00:54  Michael Granger <ged@FaerieMUD.org>
+2004-11-16 03:28  ged
 
-	* extconf.rb (1.6), poll.c (1.6), lib/poll.rb (1.11):
+	* .gemspec: -- Added gemspec by Chad Fowler.
 
-	- Removed for IO::Reactor, which no longer needs a C backend.
-	
-2003-05-08 16:49  Michael Granger <ged@FaerieMUD.org>
+2004-11-16 03:28  ged
 
-	* makesitedocs.rb (1.3, RELEASE_0_04):
+	* docs/makedocs.rb: -- CSS2 template is now RDoc's default.
 
-	makesitedocs.rb
-	
-2003-04-20 22:37  Michael Granger <ged@FaerieMUD.org>
+2004-11-14 22:56  ged
 
-	* test.rb (1.6):
+	* .cvsignore: -- remove extraneous .cvsignore file
 
-	Added workaround for recent versions of Test::Unit's API changes.
-	
-2003-04-20 22:34  Michael Granger <ged@FaerieMUD.org>
+2003-12-13 22:11  deveiant
 
-	* poll.c (1.5):
+	* lib/io/reactor.rb: - Removed duplicate #registered? method.
+	  Spotted by Daniel Berger <djberge at
+	  qwest dot com>.
 
-	Added code for simulating poll(2) with rb_thread_select() for machines without a native poll(). Based on code for Freehaven by
-	Nick Mathewson <nickm@freehaven.net>.
-	
-2003-04-20 22:32  Michael Granger <ged@FaerieMUD.org>
+2003-08-07 02:19  deveiant
 
-	* extconf.rb (1.5):
+	* test.rb: - Added workarounds for Win32. Thanks to Daniel Berger.
 
-	Added fake poll code to allow machines without a poll(2) to use the library. This also might become the primary method of polling, sadly, as Ruby doesn't tolerate other async IO methods very well due to its use of select() for its threading.
-	
-2002-10-20 21:47  Michael Granger <ged@FaerieMUD.org>
+2003-08-04 23:58  deveiant
 
-	* lib/: poll.rb (1.10), io/reactor.rb (1.10) (utags: RELEASE_0_03):
+	* MANIFEST: - Added install.rb file.
 
-	- Got rid of a type-checking statement, as it didn't account for using an IO
+2003-08-04 23:57  deveiant
+
+	* CATALOG: - Added meta-data to header for use in the frontend to
+	  RDoc.
+
+2003-08-04 23:57  deveiant
+
+	* test.rb: - Renumbered to ease addition of new tests
+	  
+	  - Added tests for argument lists.
+
+2003-08-04 23:56  deveiant
+
+	* lib/io/reactor.rb: - De-tabbed the documentation in the header.
+	  
+	  - Added argument list given to handlers back in.
+
+2003-08-04 23:53  deveiant
+
+	* examples/chatserver.rb: - Moved classes into the Example
+	  namespace to distinguish them in the docs from
+	  the real classes.
+
+2003-08-04 23:52  deveiant
+
+	* docs, docs/.cvsignore, docs/CATALOG, docs/makedocs.rb: Initial
+	  checkin.
+
+2003-08-04 23:52  deveiant
+
+	* utils.rb: - Propagated fixes/new features from Arrow.
+
+2003-07-22 16:31  deveiant
+
+	* lib/io/reactor.rb: - Fixed documentation for the pendingEvents
+	  attribute.
+
+2003-07-22 16:17  deveiant
+
+	* ChangeLog: Updated
+
+2003-07-21 15:04  deveiant
+
+	* README: - Changed to IO::Reactor.
+
+2003-07-21 14:21  deveiant
+
+	* install.rb: Initial checkin.
+
+2003-07-21 07:01  deveiant
+
+	* CATALOG, MANIFEST: - Refactored into IO::Reactor from Ruby-Poll.
+
+2003-07-21 06:56  deveiant
+
+	* extconf.rb, lib/poll.rb, poll.c: - Removed for IO::Reactor, which
+	  no longer needs a C backend.
+
+2003-07-21 06:55  deveiant
+
+	* examples/chatserver.rb, lib/io/reactor.rb, test.rb, utils.rb: -
+	  Refactored into IO::Reactor from Ruby-Poll.
+
+2003-05-08 22:49  deveiant
+
+	* makesitedocs.rb: makesitedocs.rb
+
+2003-04-21 04:37  deveiant
+
+	* test.rb: Added workaround for recent versions of Test::Unit's API
+	  changes.
+
+2003-04-21 04:34  deveiant
+
+	* poll.c: Added code for simulating poll(2) with rb_thread_select()
+	  for machines without a native poll(). Based on code for Freehaven
+	  by
+	  Nick Mathewson <nickm@freehaven.net>.
+
+2003-04-21 04:32  deveiant
+
+	* extconf.rb: Added fake poll code to allow machines without a
+	  poll(2) to use the library. This also might become the primary
+	  method of polling, sadly, as Ruby doesn't tolerate other async IO
+	  methods very well due to its use of select() for its threading.
+
+2002-10-21 03:47  deveiant
+
+	* lib/io/reactor.rb, lib/poll.rb: - Got rid of a type-checking
+	  statement, as it didn't account for using an IO
 	  inside a wrappered or delegated object.
-	
-	- Fixed use of deprecated 'type' method.
-	
-2002-09-18 06:33  Michael Granger <ged@FaerieMUD.org>
+	  
+	  - Fixed use of deprecated 'type' method.
 
-	* makedocs.rb (1.3, RELEASE_0_04, RELEASE_0_03, RELEASE_0_02):
+2002-09-18 12:40  deveiant
 
-	- Removed dependence on as-yet-undistributed xhtml RDoc template.
-	
-2002-09-06 10:52  Michael Granger <ged@FaerieMUD.org>
+	* ., .cvsignore: - Added Makefile and mkmf.log.
 
-	* poll.c (1.4, RELEASE_0_03, RELEASE_0_02):
+2002-09-18 12:35  deveiant
 
-	- Added interrupt-handling to the _poll call.
-	
-	- Added more-informative debugging.
-	
-2002-07-20 10:07  Michael Granger <ged@FaerieMUD.org>
+	* ChangeLog: Updated.
 
-	* lib/: poll.rb (1.9), io/reactor.rb (1.9) (utags: RELEASE_0_02):
+2002-09-18 12:33  deveiant
 
-	- New method: #setMask().
-	
-	- New method: #callback().
-	
-	- New method: #args().
-	
-	- Implemented the #register() method in terms of the other setter methods to
+	* makedocs.rb: - Removed dependence on as-yet-undistributed xhtml
+	  RDoc template.
+
+2002-09-06 17:02  deveiant
+
+	* MANIFEST: - Trimmed the docs/* directory.
+	  
+	  - Made the examples explicit for now, as I don't want to include
+	  unfinished
+	  examples.
+
+2002-09-06 16:52  deveiant
+
+	* poll.c: - Added interrupt-handling to the _poll call.
+	  
+	  - Added more-informative debugging.
+
+2002-07-20 16:07  deveiant
+
+	* lib/io/reactor.rb, lib/poll.rb: - New method: #setMask().
+	  
+	  - New method: #callback().
+	  
+	  - New method: #args().
+	  
+	  - Implemented the #register() method in terms of the other setter
+	  methods to
 	  consolidate the maintenance of internal data structures.
-	
-	- Added missing callback *args to #setCallback().
-	
-	- Cleared up documentation for #register.
-	
-2002-07-20 10:03  Michael Granger <ged@FaerieMUD.org>
+	  
+	  - Added missing callback *args to #setCallback().
+	  
+	  - Cleared up documentation for #register.
 
-	* examples/chatserver.rb (1.2, RELEASE_0_03, RELEASE_0_02):
+2002-07-20 16:03  deveiant
 
-	- Changed name of user class to 'User' to avoid confusion about its role in the
+	* examples/chatserver.rb: - Changed name of user class to 'User' to
+	  avoid confusion about its role in the
 	  server.
-	
-2002-07-20 10:01  Michael Granger <ged@FaerieMUD.org>
 
-	* test.rb (1.5, RELEASE_0_03, RELEASE_0_02):
+2002-07-20 16:01  deveiant
 
-	- Added test for the #callback method.
-	
-2002-07-20 10:01  Michael Granger <ged@FaerieMUD.org>
+	* test.rb: - Added test for the #callback method.
 
-	* makedocs.rb (1.2):
+2002-07-20 16:01  deveiant
 
-	- Added template argument to make it use the xhtml template.
-	
-2002-07-19 10:29  Michael Granger <ged@FaerieMUD.org>
+	* makedocs.rb: - Added template argument to make it use the xhtml
+	  template.
 
-	* lib/: poll.rb (1.8), io/reactor.rb (1.8):
+2002-07-19 16:29  deveiant
 
-	- Fixed a funny typo.
-	
-2002-07-18 21:58  Michael Granger <ged@FaerieMUD.org>
+	* lib/io/reactor.rb, lib/poll.rb: - Fixed a funny typo.
 
-	* CATALOG (1.1, RELEASE_0_03, RELEASE_0_02):
+2002-07-19 04:12  deveiant
 
-	Initial commit.
-	
-2002-07-18 21:58  Michael Granger <ged@FaerieMUD.org>
+	* MANIFEST: - Moved CATALOG to the bottom, as the first entry is
+	  the one that the version is
+	  extracted from.
 
-	* utils.rb (1.3, RELEASE_0_03, RELEASE_0_02):
+2002-07-19 04:00  deveiant
 
-	- Fixed typo in vetManifest()
-	
-	- Added case to read the documentation CATALOG in the base directory if it's not
+	* MANIFEST: - Added the documentation CATALOG file.
+
+2002-07-19 03:58  deveiant
+
+	* CATALOG: Initial commit.
+
+2002-07-19 03:58  deveiant
+
+	* utils.rb: - Fixed typo in vetManifest()
+	  
+	  - Added case to read the documentation CATALOG in the base
+	  directory if it's not
 	  in the docs/ directory.
-	
-2002-07-18 21:55  Michael Granger <ged@FaerieMUD.org>
 
-	* makesitedocs.rb (1.2, RELEASE_0_03, RELEASE_0_02):
+2002-07-19 03:55  deveiant
 
-	- Merged some of the features from the MUES doc-gen script.
-	
-2002-07-18 21:52  Michael Granger <ged@FaerieMUD.org>
+	* makesitedocs.rb: - Merged some of the features from the MUES
+	  doc-gen script.
 
-	* lib/: poll.rb (1.7), io/reactor.rb (1.7):
+2002-07-19 03:52  deveiant
 
-	- Added callback arguments to the register() method.
-	
-2002-07-18 21:52  Michael Granger <ged@FaerieMUD.org>
+	* lib/io/reactor.rb, lib/poll.rb: - Added callback arguments to the
+	  register() method.
 
-	* test.rb (1.4):
+2002-07-19 03:52  deveiant
 
-	- Added test for new "with-args" register() method call.
-	
-2002-07-18 09:42  Michael Granger <ged@FaerieMUD.org>
+	* test.rb: - Added test for new "with-args" register() method call.
 
-	* utils.rb (1.2):
+2002-07-18 15:42  deveiant
 
-	- Added a debugMsg function.
-	
-	- Qualified all functions as module_functions.
-	
-2002-07-18 09:40  Michael Granger <ged@FaerieMUD.org>
+	* utils.rb: - Added a debugMsg function.
+	  
+	  - Qualified all functions as module_functions.
 
-	* lib/: poll.rb (1.6), io/reactor.rb (1.6):
+2002-07-18 15:40  deveiant
 
-	- Fixed some typos
-	
-	- Added clarification and additional documentation for some methods.
-	
-2002-07-18 09:35  Michael Granger <ged@FaerieMUD.org>
+	* lib/io/reactor.rb, lib/poll.rb: - Fixed some typos
+	  
+	  - Added clarification and additional documentation for some
+	  methods.
 
-	* README (1.4, RELEASE_0_03, RELEASE_0_02):
+2002-07-18 15:35  deveiant
 
-	- Fixed a typo.
-	
-2002-04-18 16:53  Michael Granger <ged@FaerieMUD.org>
+	* README: - Fixed a typo.
 
-	* extconf.rb (1.4, RELEASE_0_03, RELEASE_0_02):
+2002-04-18 22:53  deveiant
 
-	- Corrected a bug in the header =:)
-	
-2002-04-18 12:01  Michael Granger <ged@FaerieMUD.org>
+	* extconf.rb: - Corrected a bug in the header =:)
 
-	* makedist.rb (1.1, RELEASE_0_04, RELEASE_0_03, RELEASE_0_02),
-	makesitedocs.rb (1.1), utils.rb (1.1) (utags: RELEASE_0_01):
+2002-04-18 18:21  deveiant
 
-	Initial commit
-	
-2002-04-18 11:24  Michael Granger <ged@FaerieMUD.org>
+	* ., .cvsignore: Added docs directory
 
-	* extconf.rb (1.3, RELEASE_0_01):
+2002-04-18 18:09  deveiant
 
-	- Corrected path to the docs-generation script.
-	
-2002-04-18 10:23  Michael Granger <ged@FaerieMUD.org>
+	* ., .cvsignore: Initial commit
 
-	* makedocs.rb (1.1, RELEASE_0_01):
+2002-04-18 18:04  deveiant
 
-	Initial commit
-	
-2002-04-18 10:23  Michael Granger <ged@FaerieMUD.org>
+	* MANIFEST: - Added makedocs.rb
 
-	* poll.c (1.3, RELEASE_0_01):
+2002-04-18 18:01  deveiant
 
-	- Added some comments for RDoc, should it ever parse protected methods.
-	
-	- Changed the name of the second arg to _poll() to handleArray, as it wasn't
+	* makedist.rb, makesitedocs.rb, utils.rb: Initial commit
+
+2002-04-18 17:24  deveiant
+
+	* extconf.rb: - Corrected path to the docs-generation script.
+
+2002-04-18 17:24  deveiant
+
+	* MANIFEST: - Added examples directory.
+
+2002-04-18 17:23  deveiant
+
+	* ChangeLog: Initial commit.
+
+2002-04-18 16:26  deveiant
+
+	* MANIFEST: - Corrected poll.c path
+
+2002-04-18 16:23  deveiant
+
+	* makedocs.rb: Initial commit
+
+2002-04-18 16:23  deveiant
+
+	* poll.c: - Added some comments for RDoc, should it ever parse
+	  protected methods.
+	  
+	  - Changed the name of the second arg to _poll() to handleArray,
+	  as it wasn't
 	  really an array of file descriptors.
-	
-2002-04-18 08:44  Michael Granger <ged@FaerieMUD.org>
 
-	* test.rb (1.3, RELEASE_0_01):
+2002-04-18 14:44  deveiant
 
-	- Removed the "ext" dir from the ones being added to the LOAD_PATH, as it's gone
+	* test.rb: - Removed the "ext" dir from the ones being added to the
+	  LOAD_PATH, as it's gone
 	  away.
-	
-	- Removed a require left over from the failed tempfile experiment.
-	
-2002-04-18 08:43  Michael Granger <ged@FaerieMUD.org>
+	  
+	  - Removed a require left over from the failed tempfile
+	  experiment.
 
-	* extconf.rb (1.2):
+2002-04-18 14:43  deveiant
 
-	- Moved the ext/extconf.rb stuff into this one because the ext directory is
+	* extconf.rb: - Moved the ext/extconf.rb stuff into this one
+	  because the ext directory is
 	  going away.
-	
-2002-04-18 08:42  Michael Granger <ged@FaerieMUD.org>
 
-	* README (1.3, RELEASE_0_01):
+2002-04-18 14:42  deveiant
 
-	- Changed from alpha to beta
-	
-	- Added requirements section
-	
-	- Modified installation section to use 'site-install' instead of 'install', and
-	  took stuff out that would have been redundant with the requires section.
-	
-2002-04-17 15:34  Michael Granger <ged@FaerieMUD.org>
+	* README: - Changed from alpha to beta
+	  
+	  - Added requirements section
+	  
+	  - Modified installation section to use 'site-install' instead of
+	  'install', and
+	  took stuff out that would have been redundant with the requires
+	  section.
 
-	* lib/: poll.rb (1.5), io/reactor.rb (1.5) (utags: RELEASE_0_01):
+2002-04-18 14:39  deveiant
 
-	- Added :yeilds: RDoc construct to #poll.
-	
-2002-04-17 15:20  Michael Granger <ged@FaerieMUD.org>
+	* MANIFEST: Initial commit
 
-	* README (1.2):
+2002-04-18 14:11  deveiant
 
-	- Separated abstract from header.
-	
-2002-04-17 15:18  Michael Granger <ged@FaerieMUD.org>
+	* Attic: Moved C source to base dir so extconf will work right.
 
-	* lib/: poll.rb (1.4), io/reactor.rb (1.4):
+2002-04-17 21:34  deveiant
 
-	- Clarified abstract.
-	
-2002-04-17 15:14  Michael Granger <ged@FaerieMUD.org>
+	* lib/io/reactor.rb, lib/poll.rb: - Added :yeilds: RDoc construct
+	  to #poll.
 
-	* README (1.1):
+2002-04-17 21:20  deveiant
 
-	Initial commit
-	
-2002-04-17 07:03  Michael Granger <ged@FaerieMUD.org>
+	* README: - Separated abstract from header.
 
-	* lib/: poll.rb (1.3), io/reactor.rb (1.3):
+2002-04-17 21:18  deveiant
 
-	- Fixed documentation for the EventMask bitwise operators.
-	
-2002-04-17 06:48  Michael Granger <ged@FaerieMUD.org>
+	* lib/io/reactor.rb, lib/poll.rb: - Clarified abstract.
 
-	* lib/: poll.rb (1.2), io/reactor.rb (1.2):
+2002-04-17 21:14  deveiant
 
-	- Re-implemented after the first one was wiped out by extconf.
-	
-2002-04-17 06:47  Michael Granger <ged@FaerieMUD.org>
+	* README: Initial commit
 
-	* poll.c (1.2):
+2002-04-17 13:03  deveiant
 
-	- Added shortcut constants
-	
-	- Added _GNU_SOURCE define to catch the additional poll.h constants under Linux
-	
-	- Changed _poll to a protected method.
-	
-2002-04-17 06:46  Michael Granger <ged@FaerieMUD.org>
+	* lib/io/reactor.rb, lib/poll.rb: - Fixed documentation for the
+	  EventMask bitwise operators.
 
-	* test.rb (1.2):
+2002-04-17 12:48  deveiant
 
-	- Added lots of stuff, redesigned to match the new API
-	
-2002-04-17 06:45  Michael Granger <ged@FaerieMUD.org>
+	* lib/io/reactor.rb, lib/poll.rb: - Re-implemented after the first
+	  one was wiped out by extconf.
 
-	* examples/chatserver.rb (1.1, RELEASE_0_01):
+2002-04-17 12:47  deveiant
 
-	Initial commit
-	
-2002-04-16 04:47  Michael Granger <ged@FaerieMUD.org>
+	* Attic/ext/poll.c, poll.c: - Added shortcut constants
+	  
+	  - Added _GNU_SOURCE define to catch the additional poll.h
+	  constants under Linux
+	  
+	  - Changed _poll to a protected method.
 
-	* extconf.rb (1.1), poll.c (1.1), test.rb (1.1), lib/poll.rb (1.1),
-	lib/io/reactor.rb (1.1):
+2002-04-17 12:46  deveiant
 
-	Initial revision
-	
-2002-04-16 04:47  Michael Granger <ged@FaerieMUD.org>
+	* test.rb: - Added lots of stuff, redesigned to match the new API
 
-	* extconf.rb (1.1.1.1), poll.c (1.1.1.1), test.rb (1.1.1.1),
-	lib/poll.rb (1.1.1.1), lib/io/reactor.rb (1.1.1.1) (utags: IMPORT):
+2002-04-17 12:45  deveiant
 
-	Initial import
-	
+	* examples, examples/chatserver.rb: Initial commit
+
+2002-04-16 10:47  deveiant
+
+	* Attic, Attic/ext, Attic/ext/extconf.rb, Attic/ext/poll.c,
+	  extconf.rb, lib, lib/io, lib/io/reactor.rb, lib/poll.rb, poll.c,
+	  test.rb: Initial revision
+
+2002-04-16 10:47  
+
+	* .: New repository initialized by cvs2svn.
+
