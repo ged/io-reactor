@@ -57,7 +57,7 @@ class Reactor
 	### Class constants
 
 	# SVN Revision
-	SVNRev = %q$Rev: 388 $
+	SVNRev = %q$Rev$
 
 	# SVN Id
 	SVNId = %q$Id$

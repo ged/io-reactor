@@ -35,7 +35,7 @@
 #
 # == Version
 #
-#  $Id: chatserver.rb,v 1.4 2003/08/04 23:53:32 deveiant Exp $
+#  $Id$
 # 
 
 require 'io/reactor'
