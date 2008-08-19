@@ -1,386 +1,553 @@
-2004-11-16 03:34  ged
+-- Tue, 19 Aug 2008 20:30:57 -0000 by deveiant (r85) -----
+   Added:   project.yml (new)
+            LICENSE (new)
+   Changed: README
+            /trunk
+            examples/simpleserver.rb
+            utils.rb
+            examples/simple.rb
+            spec/io/reactor_spec.rb (and 5 other/s)
+   Deleted: .gemspec
+            install.rb
+            CATALOG
+            misc
 
-	* .: -- Updated project-version prop to 0.0.6
+   Moved project under my new build system.
 
-2004-11-16 03:31  ged
 
-	* .: -- Added project metadata properties to base dir.
+-- Mon, 14 Jan 2008 17:26:07 -0000 by deveiant (r84) -----
+   Added:   misc/spec_verify_helpers.rb (new)
+            examples/simpleserver.rb (new)
+            spec/io (new)
+            misc/rake_helpers.rb (new)
+            examples/simple.rb (new)
+            spec/io/reactor_spec.rb (new) (and 7 other/s)
+   Changed: /trunk
+            utils.rb
+            lib/io/reactor.rb
+            ChangeLog
+            docs
+   Deleted: docs/CATALOG
+            makedist.rb
+            docs/.cvsignore
+            MANIFEST
+            docs/makedocs.rb
+            test.rb (and 1 other/s)
 
-2004-11-16 03:29  ged
+    * Updated project to Rakefile+RSpec style.
+    * Applied bugfix for auto-vivification bug and another related edgecase (fixes #3)
+    * Bumped version to 1.0.0.
 
-	* makedist.rb, makedocs.rb, makesitedocs.rb, utils.rb: -- Updated
-	  dist scripts from project-utils.
-	  -- Removed unneeded docs-generation scripts.
 
-2004-11-16 03:28  ged
+-- Tue, 16 Nov 2004 03:34:02 -0000 by ged (r83) -----
+   Changed: /trunk
 
-	* .gemspec: -- Added gemspec by Chad Fowler.
+   -- Updated project-version prop to 0.0.6
 
-2004-11-16 03:28  ged
 
-	* docs/makedocs.rb: -- CSS2 template is now RDoc's default.
+-- Tue, 16 Nov 2004 03:31:51 -0000 by ged (r81) -----
+   Changed: /trunk
 
-2004-11-14 22:56  ged
+   -- Added project metadata properties to base dir.
 
-	* .cvsignore: -- remove extraneous .cvsignore file
 
-2003-12-13 22:11  deveiant
+-- Tue, 16 Nov 2004 03:29:58 -0000 by ged (r80) -----
+   Changed: utils.rb
+            makedist.rb
+   Deleted: makesitedocs.rb
+            makedocs.rb
 
-	* lib/io/reactor.rb: - Removed duplicate #registered? method.
-	  Spotted by Daniel Berger <djberge at
-	  qwest dot com>.
+   -- Updated dist scripts from project-utils.
+   -- Removed unneeded docs-generation scripts.
 
-2003-08-07 02:19  deveiant
 
-	* test.rb: - Added workarounds for Win32. Thanks to Daniel Berger.
+-- Tue, 16 Nov 2004 03:28:58 -0000 by ged (r79) -----
+   Added:   .gemspec (new)
 
-2003-08-04 23:58  deveiant
+   -- Added gemspec by Chad Fowler.
 
-	* MANIFEST: - Added install.rb file.
 
-2003-08-04 23:57  deveiant
+-- Tue, 16 Nov 2004 03:28:26 -0000 by ged (r78) -----
+   Changed: docs/makedocs.rb
 
-	* CATALOG: - Added meta-data to header for use in the frontend to
-	  RDoc.
+   -- CSS2 template is now RDoc's default.
 
-2003-08-04 23:57  deveiant
 
-	* test.rb: - Renumbered to ease addition of new tests
-	  
-	  - Added tests for argument lists.
+-- Sun, 14 Nov 2004 22:56:42 -0000 by ged (r77) -----
+   Deleted: .cvsignore
 
-2003-08-04 23:56  deveiant
+   -- remove extraneous .cvsignore file
 
-	* lib/io/reactor.rb: - De-tabbed the documentation in the header.
-	  
-	  - Added argument list given to handlers back in.
 
-2003-08-04 23:53  deveiant
+-- Sat, 13 Dec 2003 22:11:42 -0000 by deveiant (r76) -----
+   Changed: lib/io/reactor.rb
 
-	* examples/chatserver.rb: - Moved classes into the Example
-	  namespace to distinguish them in the docs from
-	  the real classes.
+   - Removed duplicate #registered? method. Spotted by Daniel Berger <djberge at
+   qwest dot com>.
 
-2003-08-04 23:52  deveiant
 
-	* docs, docs/.cvsignore, docs/CATALOG, docs/makedocs.rb: Initial
-	  checkin.
+-- Thu, 07 Aug 2003 02:19:38 -0000 by deveiant (r75) -----
+   Changed: test.rb
 
-2003-08-04 23:52  deveiant
+   - Added workarounds for Win32. Thanks to Daniel Berger.
 
-	* utils.rb: - Propagated fixes/new features from Arrow.
 
-2003-07-22 16:31  deveiant
+-- Mon, 04 Aug 2003 23:58:10 -0000 by deveiant (r73) -----
+   Changed: MANIFEST
 
-	* lib/io/reactor.rb: - Fixed documentation for the pendingEvents
-	  attribute.
+   - Added install.rb file.
 
-2003-07-22 16:17  deveiant
 
-	* ChangeLog: Updated
+-- Mon, 04 Aug 2003 23:57:45 -0000 by deveiant (r72) -----
+   Changed: CATALOG
 
-2003-07-21 15:04  deveiant
+   - Added meta-data to header for use in the frontend to RDoc.
 
-	* README: - Changed to IO::Reactor.
 
-2003-07-21 14:21  deveiant
+-- Mon, 04 Aug 2003 23:57:07 -0000 by deveiant (r71) -----
+   Changed: test.rb
 
-	* install.rb: Initial checkin.
+   - Renumbered to ease addition of new tests
+   - Added tests for argument lists.
 
-2003-07-21 07:01  deveiant
 
-	* CATALOG, MANIFEST: - Refactored into IO::Reactor from Ruby-Poll.
+-- Mon, 04 Aug 2003 23:56:14 -0000 by deveiant (r70) -----
+   Changed: lib/io/reactor.rb
 
-2003-07-21 06:56  deveiant
+   - De-tabbed the documentation in the header.
+   - Added argument list given to handlers back in.
 
-	* extconf.rb, lib/poll.rb, poll.c: - Removed for IO::Reactor, which
-	  no longer needs a C backend.
 
-2003-07-21 06:55  deveiant
+-- Mon, 04 Aug 2003 23:53:32 -0000 by deveiant (r69) -----
+   Changed: examples/chatserver.rb
 
-	* examples/chatserver.rb, lib/io/reactor.rb, test.rb, utils.rb: -
-	  Refactored into IO::Reactor from Ruby-Poll.
+   - Moved classes into the Example namespace to distinguish them in the docs from
+   the real classes.
 
-2003-05-08 22:49  deveiant
 
-	* makesitedocs.rb: makesitedocs.rb
+-- Mon, 04 Aug 2003 23:52:33 -0000 by deveiant (r68) -----
+   Added:   docs/makedocs.rb (new)
+            docs/CATALOG (new)
+            docs/.cvsignore (new)
+            docs (new)
 
-2003-04-21 04:37  deveiant
+   Initial checkin.
 
-	* test.rb: Added workaround for recent versions of Test::Unit's API
-	  changes.
 
-2003-04-21 04:34  deveiant
+-- Mon, 04 Aug 2003 23:52:07 -0000 by deveiant (r67) -----
+   Changed: utils.rb
 
-	* poll.c: Added code for simulating poll(2) with rb_thread_select()
-	  for machines without a native poll(). Based on code for Freehaven
-	  by
-	  Nick Mathewson <nickm@freehaven.net>.
+   - Propagated fixes/new features from Arrow.
 
-2003-04-21 04:32  deveiant
 
-	* extconf.rb: Added fake poll code to allow machines without a
-	  poll(2) to use the library. This also might become the primary
-	  method of polling, sadly, as Ruby doesn't tolerate other async IO
-	  methods very well due to its use of select() for its threading.
+-- Tue, 22 Jul 2003 16:31:17 -0000 by deveiant (r65) -----
+   Changed: lib/io/reactor.rb
 
-2002-10-21 03:47  deveiant
+   - Fixed documentation for the pendingEvents attribute.
 
-	* lib/io/reactor.rb, lib/poll.rb: - Got rid of a type-checking
-	  statement, as it didn't account for using an IO
-	  inside a wrappered or delegated object.
-	  
-	  - Fixed use of deprecated 'type' method.
 
-2002-09-18 12:40  deveiant
+-- Tue, 22 Jul 2003 16:17:19 -0000 by deveiant (r64) -----
+   Changed: ChangeLog
 
-	* ., .cvsignore: - Added Makefile and mkmf.log.
+   Updated
 
-2002-09-18 12:35  deveiant
 
-	* ChangeLog: Updated.
+-- Mon, 21 Jul 2003 15:04:50 -0000 by deveiant (r63) -----
+   Changed: README
 
-2002-09-18 12:33  deveiant
+   - Changed to IO::Reactor.
 
-	* makedocs.rb: - Removed dependence on as-yet-undistributed xhtml
-	  RDoc template.
 
-2002-09-06 17:02  deveiant
+-- Mon, 21 Jul 2003 14:21:30 -0000 by deveiant (r62) -----
+   Added:   install.rb (new)
 
-	* MANIFEST: - Trimmed the docs/* directory.
-	  
-	  - Made the examples explicit for now, as I don't want to include
-	  unfinished
-	  examples.
+   Initial checkin.
 
-2002-09-06 16:52  deveiant
 
-	* poll.c: - Added interrupt-handling to the _poll call.
-	  
-	  - Added more-informative debugging.
+-- Mon, 21 Jul 2003 07:01:57 -0000 by deveiant (r61) -----
+   Changed: MANIFEST
+            CATALOG
 
-2002-07-20 16:07  deveiant
+   - Refactored into IO::Reactor from Ruby-Poll.
 
-	* lib/io/reactor.rb, lib/poll.rb: - New method: #setMask().
-	  
-	  - New method: #callback().
-	  
-	  - New method: #args().
-	  
-	  - Implemented the #register() method in terms of the other setter
-	  methods to
-	  consolidate the maintenance of internal data structures.
-	  
-	  - Added missing callback *args to #setCallback().
-	  
-	  - Cleared up documentation for #register.
 
-2002-07-20 16:03  deveiant
+-- Mon, 21 Jul 2003 06:56:06 -0000 by deveiant (r60) -----
+   Deleted: lib/poll.rb
+            poll.c
+            extconf.rb
 
-	* examples/chatserver.rb: - Changed name of user class to 'User' to
-	  avoid confusion about its role in the
-	  server.
+   - Removed for IO::Reactor, which no longer needs a C backend.
 
-2002-07-20 16:01  deveiant
 
-	* test.rb: - Added test for the #callback method.
+-- Mon, 21 Jul 2003 06:55:26 -0000 by deveiant (r59) -----
+   Changed: lib/io/reactor.rb
+            test.rb
+            utils.rb
+            examples/chatserver.rb
 
-2002-07-20 16:01  deveiant
+   - Refactored into IO::Reactor from Ruby-Poll.
 
-	* makedocs.rb: - Added template argument to make it use the xhtml
-	  template.
 
-2002-07-19 16:29  deveiant
+-- Thu, 08 May 2003 22:49:38 -0000 by deveiant (r58) -----
+   Changed: makesitedocs.rb
 
-	* lib/io/reactor.rb, lib/poll.rb: - Fixed a funny typo.
+   makesitedocs.rb
 
-2002-07-19 04:12  deveiant
 
-	* MANIFEST: - Moved CATALOG to the bottom, as the first entry is
-	  the one that the version is
-	  extracted from.
+-- Mon, 21 Apr 2003 04:37:01 -0000 by deveiant (r57) -----
+   Changed: test.rb
 
-2002-07-19 04:00  deveiant
+   Added workaround for recent versions of Test::Unit's API changes.
 
-	* MANIFEST: - Added the documentation CATALOG file.
 
-2002-07-19 03:58  deveiant
+-- Mon, 21 Apr 2003 04:34:59 -0000 by deveiant (r56) -----
+   Changed: poll.c
 
-	* CATALOG: Initial commit.
+   Added code for simulating poll(2) with rb_thread_select() for machines without a native poll(). Based on code for Freehaven by
+   Nick Mathewson <nickm@freehaven.net>.
 
-2002-07-19 03:58  deveiant
 
-	* utils.rb: - Fixed typo in vetManifest()
-	  
-	  - Added case to read the documentation CATALOG in the base
-	  directory if it's not
-	  in the docs/ directory.
+-- Mon, 21 Apr 2003 04:32:58 -0000 by deveiant (r55) -----
+   Changed: extconf.rb
 
-2002-07-19 03:55  deveiant
+   Added fake poll code to allow machines without a poll(2) to use the library. This also might become the primary method of polling, sadly, as Ruby doesn't tolerate other async IO methods very well due to its use of select() for its threading.
 
-	* makesitedocs.rb: - Merged some of the features from the MUES
-	  doc-gen script.
 
-2002-07-19 03:52  deveiant
+-- Mon, 21 Oct 2002 03:47:01 -0000 by deveiant (r53) -----
+   Changed: lib/io/reactor.rb
+            lib/poll.rb
 
-	* lib/io/reactor.rb, lib/poll.rb: - Added callback arguments to the
-	  register() method.
+   - Got rid of a type-checking statement, as it didn't account for using an IO
+   inside a wrappered or delegated object.
+   - Fixed use of deprecated 'type' method.
 
-2002-07-19 03:52  deveiant
 
-	* test.rb: - Added test for new "with-args" register() method call.
+-- Wed, 18 Sep 2002 12:40:33 -0000 by deveiant (r51) -----
+   Changed: .cvsignore
+            /trunk
 
-2002-07-18 15:42  deveiant
+   - Added Makefile and mkmf.log.
 
-	* utils.rb: - Added a debugMsg function.
-	  
-	  - Qualified all functions as module_functions.
 
-2002-07-18 15:40  deveiant
+-- Wed, 18 Sep 2002 12:35:10 -0000 by deveiant (r50) -----
+   Changed: ChangeLog
 
-	* lib/io/reactor.rb, lib/poll.rb: - Fixed some typos
-	  
-	  - Added clarification and additional documentation for some
-	  methods.
+   Updated.
 
-2002-07-18 15:35  deveiant
 
-	* README: - Fixed a typo.
+-- Wed, 18 Sep 2002 12:33:35 -0000 by deveiant (r49) -----
+   Changed: makedocs.rb
 
-2002-04-18 22:53  deveiant
+   - Removed dependence on as-yet-undistributed xhtml RDoc template.
 
-	* extconf.rb: - Corrected a bug in the header =:)
 
-2002-04-18 18:21  deveiant
+-- Fri, 06 Sep 2002 17:02:29 -0000 by deveiant (r48) -----
+   Changed: MANIFEST
 
-	* ., .cvsignore: Added docs directory
+   - Trimmed the docs/* directory.
+   - Made the examples explicit for now, as I don't want to include unfinished
+   examples.
 
-2002-04-18 18:09  deveiant
 
-	* ., .cvsignore: Initial commit
+-- Fri, 06 Sep 2002 16:52:32 -0000 by deveiant (r47) -----
+   Changed: poll.c
 
-2002-04-18 18:04  deveiant
+   - Added interrupt-handling to the _poll call.
+   - Added more-informative debugging.
 
-	* MANIFEST: - Added makedocs.rb
 
-2002-04-18 18:01  deveiant
+-- Sat, 20 Jul 2002 16:07:01 -0000 by deveiant (r46) -----
+   Changed: lib/io/reactor.rb
+            lib/poll.rb
 
-	* makedist.rb, makesitedocs.rb, utils.rb: Initial commit
+   - New method: #setMask().
+   - New method: #callback().
+   - New method: #args().
+   - Implemented the #register() method in terms of the other setter methods to
+   consolidate the maintenance of internal data structures.
+   - Added missing callback *args to #setCallback().
+   - Cleared up documentation for #register.
 
-2002-04-18 17:24  deveiant
 
-	* extconf.rb: - Corrected path to the docs-generation script.
+-- Sat, 20 Jul 2002 16:03:01 -0000 by deveiant (r45) -----
+   Changed: examples/chatserver.rb
 
-2002-04-18 17:24  deveiant
+   - Changed name of user class to 'User' to avoid confusion about its role in the
+   server.
 
-	* MANIFEST: - Added examples directory.
 
-2002-04-18 17:23  deveiant
+-- Sat, 20 Jul 2002 16:01:37 -0000 by deveiant (r44) -----
+   Changed: test.rb
 
-	* ChangeLog: Initial commit.
+   - Added test for the #callback method.
 
-2002-04-18 16:26  deveiant
 
-	* MANIFEST: - Corrected poll.c path
+-- Sat, 20 Jul 2002 16:01:16 -0000 by deveiant (r43) -----
+   Changed: makedocs.rb
 
-2002-04-18 16:23  deveiant
+   - Added template argument to make it use the xhtml template.
 
-	* makedocs.rb: Initial commit
 
-2002-04-18 16:23  deveiant
+-- Fri, 19 Jul 2002 16:29:20 -0000 by deveiant (r42) -----
+   Changed: lib/io/reactor.rb
+            lib/poll.rb
 
-	* poll.c: - Added some comments for RDoc, should it ever parse
-	  protected methods.
-	  
-	  - Changed the name of the second arg to _poll() to handleArray,
-	  as it wasn't
-	  really an array of file descriptors.
+   - Fixed a funny typo.
 
-2002-04-18 14:44  deveiant
 
-	* test.rb: - Removed the "ext" dir from the ones being added to the
-	  LOAD_PATH, as it's gone
-	  away.
-	  
-	  - Removed a require left over from the failed tempfile
-	  experiment.
+-- Fri, 19 Jul 2002 04:12:32 -0000 by deveiant (r41) -----
+   Changed: MANIFEST
 
-2002-04-18 14:43  deveiant
+   - Moved CATALOG to the bottom, as the first entry is the one that the version is
+   extracted from.
 
-	* extconf.rb: - Moved the ext/extconf.rb stuff into this one
-	  because the ext directory is
-	  going away.
 
-2002-04-18 14:42  deveiant
+-- Fri, 19 Jul 2002 04:00:25 -0000 by deveiant (r40) -----
+   Changed: MANIFEST
 
-	* README: - Changed from alpha to beta
-	  
-	  - Added requirements section
-	  
-	  - Modified installation section to use 'site-install' instead of
-	  'install', and
-	  took stuff out that would have been redundant with the requires
-	  section.
+   - Added the documentation CATALOG file.
 
-2002-04-18 14:39  deveiant
 
-	* MANIFEST: Initial commit
+-- Fri, 19 Jul 2002 03:58:56 -0000 by deveiant (r39) -----
+   Added:   CATALOG (new)
 
-2002-04-18 14:11  deveiant
+   Initial commit.
 
-	* Attic: Moved C source to base dir so extconf will work right.
 
-2002-04-17 21:34  deveiant
+-- Fri, 19 Jul 2002 03:58:24 -0000 by deveiant (r38) -----
+   Changed: utils.rb
 
-	* lib/io/reactor.rb, lib/poll.rb: - Added :yeilds: RDoc construct
-	  to #poll.
+   - Fixed typo in vetManifest()
+   - Added case to read the documentation CATALOG in the base directory if it's not
+   in the docs/ directory.
 
-2002-04-17 21:20  deveiant
 
-	* README: - Separated abstract from header.
+-- Fri, 19 Jul 2002 03:55:15 -0000 by deveiant (r37) -----
+   Changed: makesitedocs.rb
 
-2002-04-17 21:18  deveiant
+   - Merged some of the features from the MUES doc-gen script.
 
-	* lib/io/reactor.rb, lib/poll.rb: - Clarified abstract.
 
-2002-04-17 21:14  deveiant
+-- Fri, 19 Jul 2002 03:52:47 -0000 by deveiant (r36) -----
+   Changed: lib/io/reactor.rb
+            lib/poll.rb
 
-	* README: Initial commit
+   - Added callback arguments to the register() method.
 
-2002-04-17 13:03  deveiant
 
-	* lib/io/reactor.rb, lib/poll.rb: - Fixed documentation for the
-	  EventMask bitwise operators.
+-- Fri, 19 Jul 2002 03:52:09 -0000 by deveiant (r35) -----
+   Changed: test.rb
 
-2002-04-17 12:48  deveiant
+   - Added test for new "with-args" register() method call.
 
-	* lib/io/reactor.rb, lib/poll.rb: - Re-implemented after the first
-	  one was wiped out by extconf.
 
-2002-04-17 12:47  deveiant
+-- Thu, 18 Jul 2002 15:42:16 -0000 by deveiant (r34) -----
+   Changed: utils.rb
 
-	* Attic/ext/poll.c, poll.c: - Added shortcut constants
-	  
-	  - Added _GNU_SOURCE define to catch the additional poll.h
-	  constants under Linux
-	  
-	  - Changed _poll to a protected method.
+   - Added a debugMsg function.
+   - Qualified all functions as module_functions.
 
-2002-04-17 12:46  deveiant
 
-	* test.rb: - Added lots of stuff, redesigned to match the new API
+-- Thu, 18 Jul 2002 15:40:39 -0000 by deveiant (r33) -----
+   Changed: lib/io/reactor.rb
+            lib/poll.rb
 
-2002-04-17 12:45  deveiant
+   - Fixed some typos
+   - Added clarification and additional documentation for some methods.
 
-	* examples, examples/chatserver.rb: Initial commit
 
-2002-04-16 10:47  deveiant
+-- Thu, 18 Jul 2002 15:35:44 -0000 by deveiant (r32) -----
+   Changed: README
 
-	* Attic, Attic/ext, Attic/ext/extconf.rb, Attic/ext/poll.c,
-	  extconf.rb, lib, lib/io, lib/io/reactor.rb, lib/poll.rb, poll.c,
-	  test.rb: Initial revision
+   - Fixed a typo.
 
-2002-04-16 10:47  
 
-	* .: New repository initialized by cvs2svn.
+-- Thu, 18 Apr 2002 22:53:02 -0000 by deveiant (r31) -----
+   Changed: extconf.rb
+
+   - Corrected a bug in the header =:)
+
+
+-- Thu, 18 Apr 2002 18:21:28 -0000 by deveiant (r30) -----
+   Changed: .cvsignore
+            /trunk
+
+   Added docs directory
+
+
+-- Thu, 18 Apr 2002 18:09:07 -0000 by deveiant (r29) -----
+   Added:   .cvsignore (new)
+   Changed: /trunk
+
+   Initial commit
+
+
+-- Thu, 18 Apr 2002 18:04:59 -0000 by deveiant (r28) -----
+   Changed: MANIFEST
+
+   - Added makedocs.rb
+
+
+-- Thu, 18 Apr 2002 18:01:03 -0000 by deveiant (r26) -----
+   Added:   makesitedocs.rb (new)
+            utils.rb (new)
+            makedist.rb (new)
+
+   Initial commit
+
+
+-- Thu, 18 Apr 2002 17:24:37 -0000 by deveiant (r25) -----
+   Changed: extconf.rb
+
+   - Corrected path to the docs-generation script.
+
+
+-- Thu, 18 Apr 2002 17:24:16 -0000 by deveiant (r24) -----
+   Changed: MANIFEST
+
+   - Added examples directory.
+
+
+-- Thu, 18 Apr 2002 17:23:39 -0000 by deveiant (r23) -----
+   Added:   ChangeLog (new)
+
+   Initial commit.
+
+
+-- Thu, 18 Apr 2002 16:26:02 -0000 by deveiant (r22) -----
+   Changed: MANIFEST
+
+   - Corrected poll.c path
+
+
+-- Thu, 18 Apr 2002 16:23:40 -0000 by deveiant (r21) -----
+   Added:   makedocs.rb (new)
+
+   Initial commit
+
+
+-- Thu, 18 Apr 2002 16:23:16 -0000 by deveiant (r20) -----
+   Changed: poll.c
+
+   - Added some comments for RDoc, should it ever parse protected methods.
+   - Changed the name of the second arg to _poll() to handleArray, as it wasn't
+   really an array of file descriptors.
+
+
+-- Thu, 18 Apr 2002 14:44:42 -0000 by deveiant (r19) -----
+   Changed: test.rb
+
+   - Removed the "ext" dir from the ones being added to the LOAD_PATH, as it's gone
+   away.
+   - Removed a require left over from the failed tempfile experiment.
+
+
+-- Thu, 18 Apr 2002 14:43:10 -0000 by deveiant (r18) -----
+   Changed: extconf.rb
+
+   - Moved the ext/extconf.rb stuff into this one because the ext directory is
+   going away.
+
+
+-- Thu, 18 Apr 2002 14:42:07 -0000 by deveiant (r17) -----
+   Changed: README
+
+   - Changed from alpha to beta
+   - Added requirements section
+   - Modified installation section to use 'site-install' instead of 'install', and
+   took stuff out that would have been redundant with the requires section.
+
+
+-- Thu, 18 Apr 2002 14:39:14 -0000 by deveiant (r16) -----
+   Added:   MANIFEST (new)
+
+   Initial commit
+
+
+-- Thu, 18 Apr 2002 14:11:23 -0000 by deveiant (r15) -----
+   Deleted: Attic
+
+   Moved C source to base dir so extconf will work right.
+
+
+-- Wed, 17 Apr 2002 21:34:44 -0000 by deveiant (r14) -----
+   Changed: lib/io/reactor.rb
+            lib/poll.rb
+
+   - Added :yeilds: RDoc construct to #poll.
+
+
+-- Wed, 17 Apr 2002 21:20:32 -0000 by deveiant (r13) -----
+   Changed: README
+
+   - Separated abstract from header.
+
+
+-- Wed, 17 Apr 2002 21:18:30 -0000 by deveiant (r12) -----
+   Changed: lib/io/reactor.rb
+            lib/poll.rb
+
+   - Clarified abstract.
+
+
+-- Wed, 17 Apr 2002 21:14:02 -0000 by deveiant (r11) -----
+   Added:   README (new)
+
+   Initial commit
+
+
+-- Wed, 17 Apr 2002 13:03:45 -0000 by deveiant (r10) -----
+   Changed: lib/io/reactor.rb
+            lib/poll.rb
+
+   - Fixed documentation for the EventMask bitwise operators.
+
+
+-- Wed, 17 Apr 2002 12:48:17 -0000 by deveiant (r9) -----
+   Changed: lib/io/reactor.rb
+            lib/poll.rb
+
+   - Re-implemented after the first one was wiped out by extconf.
+
+
+-- Wed, 17 Apr 2002 12:47:29 -0000 by deveiant (r8) -----
+   Changed: poll.c
+            Attic/ext/poll.c
+
+   - Added shortcut constants
+   - Added _GNU_SOURCE define to catch the additional poll.h constants under Linux
+   - Changed _poll to a protected method.
+
+
+-- Wed, 17 Apr 2002 12:46:08 -0000 by deveiant (r7) -----
+   Changed: test.rb
+
+   - Added lots of stuff, redesigned to match the new API
+
+
+-- Wed, 17 Apr 2002 12:45:30 -0000 by deveiant (r6) -----
+   Added:   examples (new)
+            examples/chatserver.rb (new)
+
+   Initial commit
+
+
+-- Tue, 16 Apr 2002 10:47:21 -0000 by deveiant (r2) -----
+   Added:   lib/io (new)
+            lib/io/reactor.rb (new)
+            lib/poll.rb (new)
+            test.rb (new)
+            Attic (new)
+            Attic/ext (new) (and 6 other/s)
+
+   Initial revision
+
+
+-- Tue, 16 Apr 2002 10:47:21 -0000 by unknown (r1) -----
+   Added:   /trunk (new)
+            /branches (new)
+            /tags (new)
+
+   New repository initialized by cvs2svn.
+
 

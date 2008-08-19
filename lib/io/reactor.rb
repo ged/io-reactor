@@ -63,7 +63,7 @@ class Reactor
 	SVNId = %q$Id$
 
 	# Package version
-	VERSION = '1.0.0'
+	VERSION = '1.0.4'
 
 	# List of valid event types, in the order IO#select returns them
 	VALID_EVENTS = [:read, :write, :error]
