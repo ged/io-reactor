@@ -1,7 +1,10 @@
 --- 
+excluded_pkgfiles: []
+
 rubyforge_project: io-reactor
 project_requirements: {}
 
+project_pubdir: /usr/local/www/code
 project_description: |-
   A pure-Ruby implementation of an asynchronous multiplexed IO
   Reactor which is based on the Reactor design pattern found in _Pattern-Oriented
@@ -9,7 +12,7 @@ project_description: |-
   Objects_. It allows a single thread to demultiplex and dispatch events from one
   or more IO objects to the appropriate handler.
 rubyforge_group: deveiate
-author_name: Michael Granger
+project_pubhost: deveiate
 project_homepage: http://deveiate.org/projects/IO-Reactor/
 project_dependencies: {}
 
@@ -18,4 +21,8 @@ project_name: IO-Reactor
 version_file: io/reactor.rb
 additional_pkgfiles: 
 - examples/*.rb
-author_email: ged@FaerieMUD.org
+dev_dependencies: {}
+
+authors: 
+  Michael Granger: ged@FaerieMUD.org
+post_install_message: ""
