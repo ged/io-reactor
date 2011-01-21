@@ -7,9 +7,6 @@ BEGIN {
 
 	puts ">>> Adding #{libdir} to load path..."
 	$LOAD_PATH.unshift( libdir.to_s )
-
-	require basedir + 'utils'
-	include UtilityFunctions
 }
 
 

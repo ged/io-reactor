@@ -9,29 +9,18 @@ BEGIN {
 	$LOAD_PATH.unshift( libdir ) unless $LOAD_PATH.include?( libdir )
 }
 
-begin
-	require 'tmpdir'
-	require 'spec/runner'
-	require 'io/reactor'
-	require 'socket'
-rescue LoadError
-	unless Object.const_defined?( :Gem )
-		require 'rubygems'
-		retry
-	end
-	raise
-end
+require 'rspec'
+require 'tempfile'
+require 'socket'
 
-
-TMPFILE   = Pathname.new( Dir.tmpdir ) + "ioreactor-spec.#{Process.pid}"
-HOST      = 'localhost'
-PORT      = 5656
-TEST_DATA = File.read( __FILE__ )
-
-$stderr.sync = $stdout.sync = true
+require 'io/reactor'
 
 
 describe IO::Reactor do
+
+	before( :all ) do
+		@test_data = File.read( __FILE__ )
+	end
 
 	before( :each ) do
 		@reactor = IO::Reactor.new
@@ -41,7 +30,7 @@ describe IO::Reactor do
 	after( :each ) do
 		@reactor.clear
 	end
-	
+
 
 	### #register/#registered? with no block
 	it "allows registration of an IO for write events" do
@@ -105,9 +94,9 @@ describe IO::Reactor do
 
 
 	it "calls registered handlers for events on an IO when they occur" do
-		data_to_send = TEST_DATA.dup
+		data_to_send = @test_data.dup
 		received_data = ''
-		
+
 		@reactor.register( @reader, :read ) do |io, event|
 			if io.eof?
 				@reactor.unregister( io )
@@ -127,17 +116,17 @@ describe IO::Reactor do
 		end
 
 		@reactor.poll until @reactor.empty?
-		
-		received_data.should == TEST_DATA
+
+		received_data.should == @test_data
 	end
-	
-	
+
+
 	it "calls a provided fallback handler if there is no handler registered for an " +
 	   "event when it occurs" do
 
-		data_to_send = TEST_DATA.dup
+		data_to_send = @test_data.dup
 		received_data = ''
-		
+
 		@reactor.register( @reader, :read )
 		@reactor.register( @writer, :write )
 
@@ -160,7 +149,7 @@ describe IO::Reactor do
 						bytes = io.write( data_to_send )
 						data_to_send.slice!( 0, bytes )
 					end
-					
+
 				when :error
 					@reactor.unregister( io )
 					io.close
@@ -169,8 +158,8 @@ describe IO::Reactor do
 				end
 			end
 		end
-		
-		received_data.should == TEST_DATA
+
+		received_data.should == @test_data
 	end
 
 
@@ -180,9 +169,9 @@ describe IO::Reactor do
 			@reactor = reactor
 			@buffer = buffer
 		end
-		
+
 		attr_reader :buffer
-		
+
 		def read_from( io, event )
 			raise ArgumentError, "expected to read, not #{event}" unless event == :read
 			if io.eof?
@@ -192,7 +181,7 @@ describe IO::Reactor do
 				@buffer << io.read( 256 )
 			end
 		end
-		
+
 		def write_to( io, event )
 			raise ArgumentError, "expected to write, not #{event}" unless event == :write
 			if @buffer.empty?
@@ -204,25 +193,25 @@ describe IO::Reactor do
 			end
 		end
 	end
-	
+
 	it "uses method or proc handlers if those are used instead of blocks" do
 		reader = IOStrategy.new( @reactor )
-		writer = IOStrategy.new( @reactor, TEST_DATA.dup )
-		
+		writer = IOStrategy.new( @reactor, @test_data.dup )
+
 		@reactor.register( @reader, :read, &reader.method(:read_from) )
 		@reactor.register( @writer, :write, &writer.method(:write_to) )
 		@reactor.poll until @reactor.empty?
-		
-		reader.buffer.should == TEST_DATA
+
+		reader.buffer.should == @test_data
 	end
-	
-	
+
+
 	it "saves pending events if there is no handler registered for them and no fallback " +
 	   "handler provided" do
 
 		@reactor.register( $stdout, :write )
 		@reactor.poll( 1.0 ).should == 1
-		
+
 		@reactor.pending_events.should have(1).members
 		@reactor.pending_events.keys.should include( $stdout )
 		@reactor.pending_events[ $stdout ].should == [ :write ]
@@ -242,7 +231,7 @@ describe IO::Reactor do
 		@reactor.disable_events( @writer, :read )
 		@reactor.should_not have_event_enabled( @writer, :read )
 	end
-	
+
 
 	it "doesn't allow the error event to be disabled for a handle" do
 		@reactor.register( @writer, :write )

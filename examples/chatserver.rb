@@ -1,6 +1,10 @@
 #!/usr/bin/ruby
+
+require 'io/reactor'
+require 'socket'
+
 # = chatserver.rb
-# 
+#
 # This is an extremely crude and simple single-threaded multiplexing chat
 # server. It (hopefully) demonstrates how to use a IO::Reactor object to do IO
 # multiplexing with events.
@@ -21,14 +25,14 @@
 #   call to #poll.
 #
 # == Author
-# 
+#
 # Michael Granger <ged@FaerieMUD.org>
-# 
+#
 # Copyright (c) 2002, 2003 The FaerieMUD Consortium. All rights reserved.
-# 
+#
 # This program is free software. You may use, modify, and/or redistribute this
 # software under the same terms as Ruby itself.
-# 
+#
 # This program is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.
@@ -36,105 +40,121 @@
 # == Version
 #
 #  $Id$
-# 
-
-require 'io/reactor'
-require 'socket'
-
-module Example
+#
+module Example; end
 
 ### Chatserver user class -- part of the chatserver example.
-class User
+class Example::User
 
+	# The "Maximum Transmissable Unit" when buffering
 	MTU	 = 4096
+
+	# Character constants for readability
 	CR   = "\015"
 	LF   = "\012"
 	EOL  = CR + LF
-	
+
+	# The prompt to display when waiting for input
 	PROMPT = 'chat> '
 
+
 	### Create and return a user object which will use the specified
-	### <tt>socket</tt> and <tt>pollObj</tt>.
+	### +socket+ and +server+.
 	def initialize( socket, server )
-		@socket = socket
-		@server = server
-		@obuffer = ''
-		@ibuffer = ''
-		@peerHost = @socket.peeraddr[2]
-		@peerPort = @socket.peeraddr[1]
+		@socket    = socket
+		@server    = server
+		@obuffer   = ''
+		@ibuffer   = ''
+		@peer_host = @socket.peeraddr[2]
+		@peer_port = @socket.peeraddr[1]
 		@connected = true
 	end
+
+
+	######
+	public
+	######
 
 	# Object attribute
 	attr_reader :socket, :server, :ibuffer, :obuffer
 
 
+	### Returns true if the user is still connected
+	def connected?
+		return self.connected ? true : false
+	end
+
+
 	### Return a stringified version of the user
 	def to_s
-		"%s:%d" % [ @peerHost, @peerPort ]
+		return "%s:%d" % [ self.peer_host, self.peer_port ]
 	end
 
 
 	### Add the specified string to the user's output buffer and turn on
 	### output events.
-	def addOutput( string )
-		@obuffer << string.chomp << EOL
-		@server.reactor.enableEvents( @socket, :write )
+	def add_output( string )
+		self.obuffer << string.chomp << EOL
+		self.server.reactor.enable_events( self.socket, :write )
 	end
-	alias :<< :addOutput
+	alias :<< :add_output
 
 
 	### Write as much of the output buffer to the socket as possible, and return
 	### the number of bytes remaining to be sent.
-	def writeOutput
-		bytes = @socket.syswrite( @obuffer )
-		@obuffer[ 0, bytes ] = '' if bytes.nonzero?
-		return @obuffer.length
+	def write_output
+		bytes = self.socket.syswrite( self.obuffer )
+		self.obuffer.slice!( 0, bytes ) if bytes.nonzero?
+
+		return self.obuffer.length
 	end
 
 
 	### Write a prompt to the user
 	def prompt
-		@obuffer << PROMPT
-		@server.reactor.enableEvents( @socket, :write )
+		self.obuffer << PROMPT
+		self.server.reactor.enable_events( self.socket, :write ) # FIXME: demeter
 	end
 
 
 	### Read at most MTU bytes from the socket and append them to the input
 	### buffer. Split off any complete lines (one that end with EOL) and return
 	### them as an Array of Strings.
-	def readInput
+	def read_input
 		rary = []
-		@ibuffer << @socket.sysread( MTU )
-		$stderr.puts "Input buffer for user #{self} now: #@ibuffer" if $VERBOSE
-		while (( pos = @ibuffer.index EOL ))
-			$stderr.puts "Found terminating EOL. "\
-				"Splitting off 0..#{pos} of the input buffer." if $VERBOSE
-			rary << @ibuffer[ 0, pos ]
-			@ibuffer[ 0, pos + EOL.length ] = ''
+
+		self.ibuffer << self.socket.sysread( MTU )
+
+		# Extract any complete input lines from the input buffer by
+		# slicing off chunks delimited by EOL
+		while (( pos = self.ibuffer.index(EOL) ))
+			rary << self.ibuffer.slice!( 0, pos )
+			self.ibuffer.lstrip!
 		end
 
 		return rary
-	rescue EOFError
-		@server.disconnectUser( self )
+
+	rescue EOFError, SystemCallError
+		# If there was a socket error, disconnect
+		@server.disconnect_user( self )
 		return []
 	end
 
 
 	### Handle poll events on the socket
-	def handleIOEvent( io, event )
+	def handle_io_event( io, event )
 		case event
 
 		when :error
-			@server.disconnectUser( self )
-			
+			@server.disconnect_user( self )
+
 		when :read
-			input = readInput()
-			@server.processInput( self, *input ) unless input.empty?
+			input = self.read_input
+			@server.process_input( self, *input ) unless input.empty?
 
 		when :write
-			bytesLeft = writeOutput()
-			@server.reactor.disableEvents( @socket, :write ) if bytesLeft.zero?
+			bytes_left = self.write_output
+			@server.reactor.disable_events( @socket, :write ) if bytes_left.zero?
 
 		end
 
@@ -144,26 +164,23 @@ class User
 	### Disconnect the user
 	def disconnect( msg='' )
 		@connected = false
+
 		unless msg.empty?
 			@obuffer = ">>> Disconnected: #{msg} <<<" + EOL
 		else
 			@obuffer = ">>> Disconnected <<<" + EOL
 		end
-		writeOutput()
+
+		self.write_output
 		@socket.close
 	end
 
-
-	### Returns true if the user is still connected
-	def connected?
-		@connected
-	end
-end # class User
+end # class Example::User
 
 
 ### Example chatserver class -- an extremely crude and simple chat server that
 ### demonstrates how to use Poll to do multiplexing IO in a single thread.
-class Server
+class Example::Server
 
 	BANNER = <<-EOF
 	[[ IO::Reactor Example Chatserver ]]
@@ -171,36 +188,57 @@ class Server
 	EOF
 
 	### Instantiate and return a chatserver on the specified host and port
-	def initialize( listenHost="0.0.0.0", listenPort=1138, interval=0.20 )
-		@socket			= TCPServer::new( listenHost, listenPort )
-		@users			= []
-		@reactor		= IO::Reactor::new
-		@pollInterval	= interval
-		@shuttingDown	= false
+	def initialize( host="0.0.0.0", port=1138, interval=0.20 )
+		@listener       = TCPServer.new( host, port )
+		@users          = []
+		@reactor        = IO::Reactor.new
+		@poll_interval  = interval
+		@shutting_down  = false
 
-		@reactor.register @socket, :read, &method(:handlePollEvent)
+		# Register for read events on the listener socket, and call the
+		# 'handle_poll_event' method when a connection comes in
+		@reactor.register( @listener, :read, &self.method(:handle_poll_event) )
 	end
+
+
+	######
+	public
+	######
 
 	# Server attributes
 	attr_reader :reactor, :users, :socket
 
 
-	### Main server loop
-	def eventLoop
-		trap( "INT" ) { shutdown("Server caught SIGINT") }
-		trap( "TERM" ) { shutdown("Server caught SIGTERM") }
-		trap( "HUP" ) { disconnectAllUsers(">>> Server reset <<<") }
+	### Start the server
+	def start
+		$stderr.puts "Chat server listening on #{srv.socket.addr[2]} port #{srv.socket.addr[1]}"
+		self.event_loop
+		$stderr.puts "Chat server finished."
+	end
 
-		until @shuttingDown
-			eventCount = @reactor.poll( @pollInterval )
-		end
+
+	### Returns +true+ if the server should shut down
+	def shutting_down?
+		return @shutting_down
+	end
+
+
+	### Main server loop
+	def event_loop
+		trap( "INT" ) { self.shutdown("Server caught SIGINT") }
+		trap( "TERM" ) { self.shutdown("Server caught SIGTERM") }
+		trap( "HUP" ) { self.disconnect_all_users(">>> Server reset <<<") }
+
+		@reactor.poll( @poll_interval ) until @shutting_down
 
 	rescue StandardError => e
 		$stderr.puts "Error in server: #{e.message}"
 		$stderr.puts "\t" + e.backtrace.join( "\n\t" )
 		shutdown( "Server error: #{e.message}" )
+
 	rescue SignalException => e
 		shutdown( "Server caught #{e.type.name}" )
+
 	ensure
 		trap( "INT", "SIG_IGN" )
 		trap( "TERM", "SIG_IGN" )
@@ -212,22 +250,24 @@ class Server
 
 	### Handle a poll event specified by <tt>event</tt> on the specified
 	### <tt>socket</tt>
-	def handlePollEvent( socket, event )
+	def handle_poll_event( socket, event )
 		$stderr.puts "Got #{event.inspect} event for #{socket.inspect}"
 
 		case event
 		when :error
 			$stderr.puts "Socket error on the listener socket."
-			shutdown()
+			self.shutdown
 
 		when :read
-			clSock = socket.accept
-			user = User::new( clSock, self )
+			client_sock = socket.accept
+			user        = Example::User.new( client_sock, self )
+
 			$stderr.puts "Accepted connection from #{user}"
-			@reactor.register clSock, :read, &user.method(:handleIOEvent)
-			user.addOutput( BANNER )
+			@reactor.register( client_sock, :read, &user.method(:handle_io_event) )
+			user.add_output( BANNER )
 			user.prompt
-			broadcastMsg( "[New connection: #{user}]" )
+
+			self.broadcast_msg( "[New connection: #{user}]" )
 			@users << user
 
 		end
@@ -235,76 +275,77 @@ class Server
 
 
 	### Process the specified input from the specified user
-	def processInput( user, *inputStrings )
-		inputStrings.each {|str|
+	def process_input( user, *input_strings )
+		input_strings.each do |str|
 			case str
 
 			when %r{^/(\w+)\s*(.*)}
-				handleCommand( user, $1, $2 )
+				self.handle_command( user, $1, $2 )
 
 			else
-				user.addOutput( "You>> #{str}" )
-				broadcastMsgFrom( user, str )
+				user.add_output( "You>> #{str}" )
+				self.broadcast_msg_from( user, str )
 			end
-		}
+		end
 
 		user.prompt if user.connected?
 	end
 
 
-	### Handle the specified command from the specified user
-	def handleCommand( user, command, args )
+	### Handle the given +command+ from the specified +user+
+	def handle_command( user, command, args )
 		case command
 
 		when /quit/
-			disconnectUser( user, 'Quit' )
-			
+			self.disconnect_user( user, 'Quit' )
+
 		when /shutdown/
-			shutdown()
+			self.shutdown
 
 		when /who/
-			user.addOutput( self.wholist(user) )
+			user.add_output( self.wholist(user) )
 
 		else
-			user.addOutput("Unknown command '#{command}'")
+			user.add_output( "Unknown command '#{command}'" )
 		end
 	end
 
 
 	### Broadcast the specified message to all connected users
-	def broadcastMsg( msg )
-		@users.each {|cl|
-			cl.addOutput( msg )
-		}
+	def broadcast_msg( msg )
+		@users.each do |cl|
+			cl.add_output( msg )
+		end
 	end
 
 
 	### Broadcast the specified message from the specified user
-	def broadcastMsgFrom( user, msg )
+	def broadcast_msg_from( user, msg )
 		userDesc = user.to_s
 
-		@users.each {|cl|
+		@users.each do |cl|
 			next if cl == user
-			cl.addOutput( "#{userDesc}>> #{msg}" )
-		}
+			cl.add_output( "#{userDesc}>> #{msg}" )
+		end
 	end
 
 
-	### Disconnect the specified user
-	def disconnectUser( user, msg='' )
+	### Disconnect the specified user after sending them the specified +msg+.
+	def disconnect_user( user, msg='' )
 		@users -= [ user ]
 		@reactor.unregister( user.socket )
 		user.disconnect( msg )
-		broadcastMsg( "#{user.to_s} Disconnected." )
+
+		self.broadcast_msg( "#{user.to_s} Disconnected." )
 	end
 
 
-	### Disconnect all connected users
-	def disconnectAllUsers( msg )
-		@users.each {|user|
+	### Disconnect all connected users after sending them the specified +msg+.
+	def disconnect_all_users( msg )
+		@users.each do |user|
 			@reactor.unregister( user.socket )
 			user.disconnect( msg )
-		}
+		end
 		@users.clear
 	end
 
@@ -312,36 +353,33 @@ class Server
 	### Shut the server down
 	def shutdown( msg="Server shutdown" )
 		$stderr.puts "Shutting down: #{msg}"
-		@shuttingDown = true
+
+		@shutting_down = true
 		@reactor.clear
-		begin
-			@socket.shutdown
-		rescue
-		end
-		disconnectAllUsers( msg )
-		begin
-			@socket.close
-		rescue
-		end
+
+		@listener.shutdown rescue nil
+		self.disconnect_all_users( msg )
+		@listener.close rescue nil
 	end
 
-	### Build and return a list of connected users for the specified user.
+
+	### Build and return a list of connected users for the specified +user+.
 	def wholist( user )
 		rval = "[Connected Users]\n" <<
-			"  *#{user}*\n"
-		@users.each {|u|
+		       "  *#{user}*\n"
+
+		@users.each do |u|
 			next if u == user
 			rval << "  #{u}\n"
-		}
+		end
 
 		return rval
 	end
 
-end # class Server
-end # module Example
+end # class Example::Server
 
-srv = Example::Server::new( *ARGV )
-$stderr.puts "Chat server listening on #{srv.socket.addr[2]} port #{srv.socket.addr[1]}"
-srv.eventLoop
-$stderr.puts "Chat server finished."
+
+if __FILE__ == $0
+	Example::Server.new( *ARGV ).start
+end
 

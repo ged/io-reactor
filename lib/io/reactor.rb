@@ -1,16 +1,14 @@
 #!/usr/bin/env ruby
 
-class IO # :nodoc:
-
 # An object-oriented multiplexing asynchronous IO mechanism for Ruby.
-# 
+#
 # == Synopsis
-# 
+#
 #    reactor = IO::Reactor.new
 #    data_to_send = "some stuff to send"
-#    
+#
 #    reader, writer = IO.pipe
-#    
+#
 #    # Read from the reader end of the pipe until the writer finishes
 #    reactor.register( reader, :read ) do |io,event|
 #        if io.eof?
@@ -20,30 +18,30 @@ class IO # :nodoc:
 #            puts io.read( 256 )
 #        end
 #    end
-#    
+#
 #    # Write to the writer end of the pipe until there's no data left
 #    reactor.register( writer, :write ) do |io,event|
 #        bytes = io.write( data_to_send )
 #        data_to_send.slice!( 0, bytes )
-#    
+#
 #        if data_to_send.empty?
 #            reactor.unregister( io )
 #            io.close
 #        end
 #    end
-#    
+#
 #    # Now pump the reactor until both sides are done
 #    reactor.poll until reactor.empty?
 #
 # == Author
-# 
+#
 # Michael Granger <ged@FaerieMUD.org>
-# 
-# Copyright (c) 2002-2008 The FaerieMUD Consortium. All rights reserved.
-# 
+#
+# Copyright (c) 2002-2011 The FaerieMUD Consortium. All rights reserved.
+#
 # This module is free software. You may use, modify, and/or redistribute this
 # software under the same terms as Ruby itself.
-# 
+#
 # This library is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 # FOR A PARTICULAR PURPOSE.
@@ -51,23 +49,14 @@ class IO # :nodoc:
 # == Version
 #
 #  $Id$
-# 
-class Reactor
+#
+class IO::Reactor
 
-	### Class constants
-
-	# SVN Revision
-	SVNRev = %q$Rev$
-
-	# SVN Id
-	SVNId = %q$Id$
-
-	# Package version
-	VERSION = '1.0.4'
+	# Library version
+	VERSION = '1.1.0'
 
 	# List of valid event types, in the order IO#select returns them
-	VALID_EVENTS = [:read, :write, :error]
-	VALID_EVENTS.freeze
+	VALID_EVENTS = [ :read, :write, :error ].freeze
 
 
 	#################################################################
@@ -76,7 +65,7 @@ class Reactor
 
 	### Create and return a new IO reactor object.
 	def initialize
-		@handles		= Hash.new {|hsh,key|
+		@handles = Hash.new {|hsh,key|
 			hsh[ key ] = {
 				:events		=> [],
 				:handler	=> nil,
@@ -99,7 +88,6 @@ class Reactor
 	# The Hash of unhandled events which occurred in the last call to #poll,
 	# keyed by handle.
 	attr_reader :pending_events
-	alias_method :pendingEvents, :pending_events
 
 
 	### Register the specified IO object with the reactor for events given as
@@ -115,7 +103,7 @@ class Reactor
 	### If +args+ contains any objects except the Symbols '<tt>:read</tt>',
 	### '<tt>:write</tt>', or '<tt>:error</tt>', and a +handler+ is specified,
 	### they will be saved and passed to handler for each event.
-	### 
+	###
 	### Registering a handle will unregister any previously registered
 	### event/handler+arguments pairs associated with the handle.
 	def register( io, *args, &handler )
@@ -124,6 +112,7 @@ class Reactor
 
 		self.unregister( io )
 		self.enable_events( io, *events )
+
 		if handler
 			self.set_handler( io, *args, &handler )
 		else
@@ -146,7 +135,6 @@ class Reactor
 	def enable_events( io, *events )
 		@handles[ io ][:events] |= events
 	end
-	alias_method :enableEvents, :enable_events
 
 
 	### Remove the specified +events+ from the list that will be polled for on
@@ -156,7 +144,6 @@ class Reactor
 			events.include?( :error )
 		@handles[ io ][:events] -= events
 	end
-	alias_method :disableEvents, :disable_events
 
 
 	### Returns +true+ if the specified +event+ is enabled for the given +io+.
@@ -166,7 +153,7 @@ class Reactor
 		return @handles[ io ][ :events ].include?( event )
 	end
 	alias_method :has_event_enabled?, :event_enabled?
-	
+
 
 	### Set the handler for events on the given +io+ handle to the specified
 	### +handler+. If any +args+ are present, they will be passed as an exploded
@@ -178,7 +165,6 @@ class Reactor
 		self.set_args( io, *args )
 		return rval
 	end
-	alias_method :setHandler, :set_handler
 
 
 	### Remove and return the handler for events on the given +io+ handle.
@@ -188,7 +174,6 @@ class Reactor
 		self.remove_args( io )
 		return rval
 	end
-	alias_method :removeHandler, :remove_handler
 
 
 	### Set the additional arguments to pass to the handler for the given +io+
@@ -198,14 +183,12 @@ class Reactor
 		@handles[ io ][:args] = args
 		return rval
 	end
-	alias_method :setArgs, :set_args
 
 
 	### Remove the arguments for the given handle to the given +args+.
 	def remove_args( io )
 		return @handles[ io ][:args].clear
 	end
-	alias_method :removeArgs, :remove_args
 
 
 	### Remove the specified <tt>io</tt> from the receiver's list of registered
@@ -230,7 +213,7 @@ class Reactor
 	end
 
 
-	
+
 	### Poll the handles registered to the reactor for pending events. The
 	### following event types are defined:
 	###
@@ -273,7 +256,7 @@ class Reactor
 				events.each do |ev|
 					# Don't continue if the io was unregistered by an earlier handler
 					break unless @handles.key?( io )
-					
+
 					args = @handles[ io ][:args]
 
 					if @handles[ io ][:handler]
@@ -301,22 +284,32 @@ class Reactor
 	protected
 	#########
 
+	# An empty hash to be returned when the select returns nil. This avoids
+	# creating a new Hash object each time the reactor is polled without
+	# any IO pending.
+	EMPTY_EVENT_HASH = {}.freeze
+
 	### Select on the registered handles, returning a Hash of handles => events
 	### for handles which had events occur.
 	def get_pending_events( timeout )
+		# Clean up any IOs which have closed
 		@handles.delete_if {|io,_| io.closed? }
 
-		eventHandles = select( self.get_read_handles, self.get_write_handles,
-			@handles.keys, timeout ) or return {}
-		eventHash = Hash.new {|hsh,io| hsh[io] = []}
+		# Make an array of readers and writers, then do the select, and return
+		# an empty hash if nothing happened
+		readers, writers = self.get_read_handles, self.get_write_handles
+		event_handles = select( readers, writers, @handles.keys, timeout ) or
+			return EMPTY_EVENT_HASH
+
+		event_hash = Hash.new {|hsh,io| hsh[io] = []}
 
 		# Fill in the hash with pending events of each type
-		VALID_EVENTS.each_with_index do |event,i|
-			eventHandles[i].each {|io| eventHash[io].push( event )}
-		end
-		return eventHash
+		event_handles[ 0 ].each {|io| event_hash[io].push(:read) }
+		event_handles[ 1 ].each {|io| event_hash[io].push(:write) }
+		event_handles[ 2 ].each {|io| event_hash[io].push(:error) }
+
+		return event_hash
 	end
-	alias_method :getPendingEvents, :get_pending_events
 
 
 	### Return an Array of handles which have handlers for the <tt>:read</tt>
@@ -326,7 +319,6 @@ class Reactor
 			find_all {|io,hsh| hsh[:events].include?( :read )}.
 			collect {|io,_| io }
 	end
-	alias_method :getReadHandles, :get_read_handles
 
 
 	### Return an Array of handles which have handlers for the <tt>:write</tt>
@@ -336,9 +328,7 @@ class Reactor
 			find_all {|io,hsh| hsh[:events].include?( :write )}.
 			collect {|io,_| io }
 	end
-	alias_method :getWriteHandles, :get_write_handles
 
 
-end # class Reactor
-end # class IO
+end # class IO::Reactor
 
