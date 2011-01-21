@@ -34,6 +34,13 @@ ENV['VERSION'] ||= hoespec.spec.version.to_s
 # Ensure the specs pass before checking in
 task 'hg:precheckin' => :spec
 
+# Make testing under rvm rubies a bit easier^h^h^h^h^h^hlazier
+RSpec::Core::RakeTask.new( :specs ) do |t|
+	t.rspec_opts = [ '-fp' ]
+	t.rspec_opts << "-I#{hoespec.rspec_dirs.join(":")}" unless
+		hoespec.rspec_dirs.empty?
+end
+
 begin
 	include Hoe::MercurialHelpers
 
