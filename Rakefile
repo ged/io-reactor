@@ -21,7 +21,7 @@ hoespec = Hoe.spec 'io_reactor' do
 	self.spec_extras[:licenses] = ["Ruby"]
 	self.spec_extras[:signing_key] = '/Volumes/Keys/ged-private_gem_key.pem'
 
-	# self.require_ruby_version( '>=1.8.7' )
+	self.require_ruby_version( '>=1.8.6' )
 
 	self.hg_sign_tags = true if self.respond_to?( :hg_sign_tags= )
 	self.yard_opts = [ '--protected', '--verbose' ] if self.respond_to?( :yard_opts= )

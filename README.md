@@ -72,7 +72,7 @@ This task will install any missing dependencies, run the tests/specs, and genera
 
 ## License
 
-Copyright (c) 2011, Michael Granger
+Copyright (c) 2002-2011, Michael Granger
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
